@@ -1,0 +1,5 @@
+{
+  "name": "Ma Diao Master",
+  "description": "A visually stunning, historically inspired implementation of the ancient Chinese game Ma Diao (馬吊). Features single-player mode with AI opponents powered by Gemini, capable of playing the game and teaching the complex rules found in historical texts.",
+  "requestFramePermissions": []
+}
