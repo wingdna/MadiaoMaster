@@ -4,7 +4,7 @@ import { GamePhase } from '../../types';
 
 // STOVE LIGHTING (Ambient atmospheric glow)
 export const StoveLighting = React.memo(({ activePlayerId, spotlightPos }: { activePlayerId: number, spotlightPos?: {x: string, y: string} | null }) => {
-    const styles = useMemo(() => {
+    const styles: React.CSSProperties = useMemo(() => {
         if (spotlightPos) {
             return {
                 background: `radial-gradient(circle at ${spotlightPos.x} ${spotlightPos.y}, 
@@ -12,7 +12,7 @@ export const StoveLighting = React.memo(({ activePlayerId, spotlightPos }: { act
                     rgba(184, 134, 11, 0.1) 30%, 
                     rgba(0, 0, 0, 0.9) 70%)`,
                 transition: 'background 0.6s cubic-bezier(0.25, 1, 0.5, 1)',
-                mixBlendMode: 'screen' as any
+                mixBlendMode: 'screen' 
             };
         }
         return { background: 'transparent' }; 
@@ -26,7 +26,6 @@ export const StoveLighting = React.memo(({ activePlayerId, spotlightPos }: { act
 // =============================================================================
 // COMPASS GEOMETRY (WIDER STADIUM SHAPE)
 // =============================================================================
-// Adjusted coordinates for a wider, more stable look on mobile portrait
 // Width: -200 to 600 (800 units), Height: -50 to 350 (400 units). Ratio 2:1
 const VIEWBOX_STR = "-250 -100 900 550"; 
 
@@ -116,7 +115,7 @@ export const Compass = React.memo(({
     }, [activePlayerId]);
 
     // Sector Mapping for Highlight
-    const sectorMapping = useMemo(() => {
+    const sectorMapping: Record<number, number> = useMemo(() => {
         if (isVertical) {
             return { 2: 3, 0: 1, 1: 2, 3: 0 }; // Adjusted for 90deg rotation visually
         }
@@ -150,7 +149,6 @@ export const Compass = React.memo(({
         : `linear-gradient(90deg, ${activeColors.main} 0%, #ffefdb 50%, ${activeColors.main} 100%)`;
 
     // Marking Styles - ABSOLUTELY POSITIONED INSIDE THE SVG COORDINATE SPACE via HTML overlay
-    // We use a tight layout.
     const getTextClass = (pid: number) => {
         const isActive = activePlayerId === pid;
         const base = "absolute font-serif font-bold transition-all duration-700 transform -translate-x-1/2 -translate-y-1/2 z-[25]";
@@ -271,19 +269,11 @@ export const Compass = React.memo(({
                  </div>
             </div>
 
-            {/* 3. MARKINGS (Retracted & Glowing) */}
-            {/* Position Percentages are tuned for the Wide Stadium Shape */}
+            {/* 3. MARKINGS */}
             <div className="absolute inset-0 z-[25] pointer-events-none" style={{ transform: 'translateZ(10px)' }}>
-                 {/* Top (North) - 25% down */}
                  <div className={getTextClass(2)} style={{ top: '25%', left: '50%' }}>北</div>
-                 
-                 {/* Bottom (South) - 75% down */}
                  <div className={getTextClass(0)} style={{ top: '75%', left: '50%' }}>南</div>
-                 
-                 {/* Left (West) - 20% in */}
                  <div className={getTextClass(3)} style={{ top: '50%', left: '20%' }}>西</div>
-                 
-                 {/* Right (East) - 80% in (or 20% from right) */}
                  <div className={getTextClass(1)} style={{ top: '50%', left: '80%' }}>東</div>
             </div>
         </div>

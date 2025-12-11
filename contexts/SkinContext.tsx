@@ -31,16 +31,24 @@ export const SkinProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const found = availableSkins.find(s => s.id === id);
         if (found) {
             setCurrentSkin(found);
-            localStorage.setItem('ma_diao_skin_id', id);
+            try {
+                localStorage.setItem('ma_diao_skin_id', id);
+            } catch (e) {
+                console.warn("Could not save skin preference", e);
+            }
         }
     };
 
     // Load from local storage on mount
     React.useEffect(() => {
-        const savedId = localStorage.getItem('ma_diao_skin_id');
-        if (savedId && savedId !== currentSkin.id) {
-            const found = availableSkins.find(s => s.id === savedId);
-            if (found) setCurrentSkin(found);
+        try {
+            const savedId = localStorage.getItem('ma_diao_skin_id');
+            if (savedId && savedId !== currentSkin.id) {
+                const found = availableSkins.find(s => s.id === savedId);
+                if (found) setCurrentSkin(found);
+            }
+        } catch (e) {
+            console.warn("Could not load skin preference", e);
         }
     }, []);
 

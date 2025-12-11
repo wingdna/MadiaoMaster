@@ -1,26 +1,60 @@
 
-<script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/"
-  }
-}
-</script>
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#050202" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://esm.sh;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: blob: https://*.transparenttextures.com https://api.dicebear.com https://xsgames.co https://api.qrserver.com;
+      connect-src 'self' https://esm.sh https://generativelanguage.googleapis.com https://*.supabase.co https://*.memfiredb.com;
+    ">
+
     <title>Ma Diao Master - Imperial Edition</title>
-    <!-- Polyfill for process (required by some libraries) -->
+
+    <!-- CRASH GUARD -->
     <script>
-      window.process = { env: { NODE_ENV: 'production' } };
+      window.addEventListener('error', function(event) {
+        const root = document.getElementById('root');
+        if (root && (!root.children.length || root.innerHTML === '')) {
+          const errDiv = document.createElement('div');
+          errDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #c5a059; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; font-family: sans-serif;`;
+          errDiv.innerHTML = `<h2 style="font-size:20px; margin-bottom:10px;">Startup Error</h2><pre style="color:#ff6b6b; font-size:12px; max-width:100%; white-space:pre-wrap; background:#111; padding:10px; border-radius:4px;">${event.message}</pre><p style="margin-top:20px; font-size:12px; color:#666;">Trying to reload might fix this.</p>`;
+          document.body.appendChild(errDiv);
+        }
+      });
     </script>
-    <!-- Load Supabase UMD -->
+
+    <!-- Import Map: FIXED & CLEAN -->
+    <!-- Using specific versions without wildcards to ensure singleton React instance -->
+    <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@0.1.1",
+    "react": "https://esm.sh/react@18.2.0?dev",
+    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime?dev",
+    "react-dom": "https://esm.sh/react-dom@18.2.0?dev&deps=react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?dev&deps=react@18.2.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.1/",
+    "react/": "https://esm.sh/react@^19.2.1/"
+  }
+}
+</script>
+
+    <!-- Polyfill -->
+    <script>
+      window.process = window.process || { env: { NODE_ENV: 'production' } };
+    </script>
+
+    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -28,18 +62,9 @@
         theme: {
           extend: {
             colors: {
-              'void': '#050202',        // Absolute black
-              'urushi-red': '#7A1212',  // Deep lacquer red
-              'cinnabar': '#D9381E',    // Bright seal red
-              'imperial-gold': '#C5A059', // Muted elegant gold
-              'gold-highlight': '#F4D088', // Shiny gold
-              'aged-paper': '#E8E4D9',  // Warm off-white
-              'ink-black': '#1A1A1A',   // Soft black for text
-              'jade-deep': '#1A3C34',   // Dark green stone
-              'jade-light': '#4A7C72',   // Light jade
-              'korozen-dark': '#3e2b22', // Dark Korozen (Brownish)
-              'korozen-main': '#705b2e', // Main Korozen (Sumac Gold)
-              'korozen-light': '#b59b50', // Light Korozen
+              'void': '#050202',
+              'imperial-gold': '#C5A059',
+              'urushi-red': '#7A1212',
             },
             fontFamily: {
               serif: ['"Noto Serif SC"', 'serif'],
@@ -47,183 +72,49 @@
             },
             backgroundImage: {
               'noise': "url('https://www.transparenttextures.com/patterns/noise.png')",
-              'rice-paper': "url('https://www.transparenttextures.com/patterns/rice-paper-2.png')",
-              'silk': "url('https://www.transparenttextures.com/patterns/black-scales.png')",
-              'seigaiha': "url('https://www.transparenttextures.com/patterns/seigaiha.png')",
-              'wood': "url('https://www.transparenttextures.com/patterns/wood-pattern.png')",
-              'gold-dust': "url('https://www.transparenttextures.com/patterns/stardust.png')", 
             },
             boxShadow: {
-              'lacquer-deep': '0 10px 30px -5px rgba(0, 0, 0, 0.9), inset 0 0 40px rgba(0, 0, 0, 0.5)',
-              'lacquer-panel': '0 4px 6px -1px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-              'card-float': '0 10px 20px -5px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0,0,0,0.2)',
-              'card-glow': '0 0 15px rgba(197, 160, 89, 0.3)',
-              'ink-bleed': '0 0 2px rgba(0,0,0,0.8)',
-              'gem-btn': 'inset 0 2px 10px rgba(255,255,255,0.2), 0 5px 15px rgba(0,0,0,0.5)',
-              'korozen-glow': '0 0 30px rgba(181, 155, 80, 0.15), inset 0 0 50px rgba(0,0,0,0.8)'
-            },
-            transitionTimingFunction: {
-              'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)', // Apple-style smooth stop
-              'out-back': 'cubic-bezier(0.34, 1.56, 0.64, 1)', // Slight overshoot
-              'in-out-soft': 'cubic-bezier(0.4, 0, 0.2, 1)', // Standard Material
+              'lacquer-deep': '0 20px 50px -10px rgba(0, 0, 0, 0.95), inset 0 0 40px rgba(0, 0, 0, 0.8)',
+              'card-float': '0 15px 30px -5px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0,0,0,0.5)',
+              'gem-btn': 'inset 0 1px 5px rgba(255,255,255,0.1), 0 5px 20px rgba(0,0,0,0.8)',
             },
             animation: {
-              'dust-rise': 'dust 20s linear infinite',
-              'card-deal': 'deal 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)',
-              'fan-open': 'fan 0.8s ease-out forwards',
-              'shuffle-packet-left': 'shuffleLeft 0.8s ease-in-out infinite',
-              'shuffle-packet-right': 'shuffleRight 0.8s ease-in-out infinite',
-              'leaf-fall': 'leafFall 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards',
-              'simple-fade': 'fadeIn 0.5s ease-out forwards',
-              'fade-in': 'fadeIn 0.3s ease-out forwards',
-              'fade-in-up': 'fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-              'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
-              'gold-flow': 'goldFlow 3s linear infinite',
-              'shimmer-slow': 'shimmer 6s linear infinite',
-              'float': 'float 6s ease-in-out infinite',
-              'burn-away': 'burnAway 1s ease-out forwards',
-              'candleFlicker': 'candleFlicker 8s ease-in-out infinite',
+              'shimmer-slow': 'shimmer 8s linear infinite',
               'sway-slow': 'sway 25s ease-in-out infinite',
-              // REFINED ANIMATIONS FOR SUBTLETY
-              'breathe-slow': 'breathe 15s ease-in-out infinite',
-              'breathe-subtle': 'breatheSubtle 4s ease-in-out infinite', // Very subtle
-              'pulse-slow-opacity': 'pulseOpacity 3s ease-in-out infinite', // Only opacity changes
+              'breathe-subtle': 'breatheSubtle 5s ease-in-out infinite',
+              'pulse-slow-opacity': 'pulseOpacity 4s ease-in-out infinite',
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
             },
             keyframes: {
-              dust: {
-                '0%': { transform: 'translateY(0) rotate(0deg)' },
-                '100%': { transform: 'translateY(-100px) rotate(5deg)' },
-              },
-              deal: {
-                '0%': { transform: 'translate(-50%, -150%) scale(0.4) rotate(10deg)', opacity: '0' },
-                '100%': { transform: 'translate(0, 0) scale(1) rotate(0deg)', opacity: '1' },
-              },
-              shuffleLeft: {
-                '0%, 100%': { transform: 'translateX(0)' },
-                '50%': { transform: 'translateX(-30px) rotate(-3deg)' },
-              },
-              shuffleRight: {
-                '0%, 100%': { transform: 'translateX(0)' },
-                '50%': { transform: 'translateX(30px) rotate(3deg)' },
-              },
-              leafFall: {
-                '0%': { transform: 'translate3d(0, -80px, 100px) rotateX(15deg) rotateY(5deg) scale(1.1)', opacity: '0' },
-                '70%': { transform: 'translate3d(0, 2px, 0) rotateX(0deg) rotateY(0deg) scale(0.98)', opacity: '1' },
-                '100%': { transform: 'translate3d(0, 0, 0) scale(1)', opacity: '1' },
-              },
-              fadeIn: {
-                '0%': { opacity: '0' },
-                '100%': { opacity: '1' },
-              },
-              fadeInUp: {
-                '0%': { opacity: '0', transform: 'translateY(15px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
-              },
-              shake: {
-                '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
-                '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
-                '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
-                '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
-              },
-              goldFlow: {
-                '0%': { backgroundPosition: '0% 50%' },
-                '100%': { backgroundPosition: '200% 50%' }
-              },
-              shimmer: {
-                '0%': { backgroundPosition: '-100% 0' },
-                '100%': { backgroundPosition: '200% 0' }
-              },
-              float: {
-                '0%, 100%': { transform: 'translateY(0)' },
-                '50%': { transform: 'translateY(-5px)' },
-              },
-              burnAway: {
-                '0%': { opacity: '1', transform: 'scale(1) translateY(0)', filter: 'grayscale(0%) contrast(100%)' },
-                '50%': { opacity: '0.8', transform: 'scale(0.9) translateY(10px)', filter: 'grayscale(100%) contrast(150%) brightness(0.5)' },
-                '100%': { opacity: '0', transform: 'scale(0.8) translateY(20px)', filter: 'grayscale(100%) contrast(200%) brightness(0)' },
-              },
-              candleFlicker: {
-                '0%, 100%': { opacity: '1', transform: 'scale(1)' },
-                '50%': { opacity: '0.9', transform: 'scale(1.02)' },
-                '25%': { opacity: '0.95', transform: 'translate(1px, 1px)' },
-                '75%': { opacity: '0.92', transform: 'translate(-1px, 0)' }
-              },
-              sway: {
-                '0%, 100%': { transform: 'translate(0px, 0px) rotate(0deg)' },
-                '20%': { transform: 'translate(15px, 10px) rotate(1deg)' },
-                '40%': { transform: 'translate(-10px, 20px) rotate(-1deg)' },
-                '60%': { transform: 'translate(-20px, -5px) rotate(0.5deg)' },
-                '80%': { transform: 'translate(10px, -15px) rotate(-0.5deg)' },
-              },
-              breathe: {
-                '0%, 100%': { opacity: '0.15', transform: 'scale(1)' },
-                '50%': { opacity: '0.25', transform: 'scale(1.1)' },
-              },
-              // NEW: Extremely subtle breathing for high-end UI
-              breatheSubtle: {
-                '0%, 100%': { opacity: '0.4' },
-                '50%': { opacity: '0.7' },
-              },
-              pulseOpacity: {
-                '0%, 100%': { opacity: '0.6' },
-                '50%': { opacity: '1' },
-              }
+              shimmer: { '0%': { backgroundPosition: '-100% 0' }, '100%': { backgroundPosition: '200% 0' } },
+              sway: { '0%, 100%': { transform: 'rotate(0deg)' }, '50%': { transform: 'rotate(2deg)' } },
+              breatheSubtle: { '0%, 100%': { opacity: '0.6' }, '50%': { opacity: '0.9' } },
+              pulseOpacity: { '0%, 100%': { opacity: '0.5' }, '50%': { opacity: '1' } },
+              fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+              fadeInUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+              shake: { '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' }, '20%, 80%': { transform: 'translate3d(2px, 0, 0)' }, '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' }, '40%, 60%': { transform: 'translate3d(4px, 0, 0)' } }
             }
           }
         }
       }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;500;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;500;700;900&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
     <style>
-      body {
-        background-color: #050202;
-        color: #E8E4D9;
-        overflow: hidden; /* Prevent pull-to-refresh */
-        touch-action: none; /* Disable double-tap zoom and pan */
-        user-select: none; /* Disable text selection */
-        -webkit-user-select: none;
-        overscroll-behavior: none;
-      }
-      .perspective-container {
-        perspective: 1200px;
-        height: 100vh;
-        width: 100vw;
-        overflow: hidden;
-        position: relative;
-      }
-      .preserve-3d {
-        transform-style: preserve-3d;
-      }
-      .tategaki {
-        writing-mode: vertical-rl;
-        text-orientation: upright;
-        letter-spacing: 0.1em;
-      }
-      .world-3d {
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-      }
-      /* Custom scrollbar for modals */
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: #1a1a1a; 
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #705b2e; 
-        border-radius: 3px;
-        border: 1px solid #3e2b22;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #b59b50; 
-      }
+      body { background-color: #050202; color: #E8E4D9; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+      .perspective-container { perspective: 1200px; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
+      .preserve-3d { transform-style: preserve-3d; }
+      .backface-hidden { backface-visibility: hidden; }
+      .tategaki { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 0.1em; }
+      .world-3d { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: #0f0a08; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #5c4025; border-radius: 2px; }
     </style>
   </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>

@@ -115,6 +115,7 @@ const GameContent: React.FC = () => {
               ...interactionState,
               onActionClick: handle3DActionClick
           }}
+          graphicsQuality={settings.graphicsQuality}
       />
 
       {/* LAYER 2: 2D HUD */}
