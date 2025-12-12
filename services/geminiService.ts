@@ -11,15 +11,18 @@ let globalAIFailure = false;
 
 try {
     // Safe check for process.env.API_KEY without throwing ReferenceError
-    const apiKey = (typeof process !== 'undefined' && process && process.env) ? process.env.API_KEY : null;
+    // In Vite/Browser env, process.env might be polyfilled or empty
+    const apiKey = (typeof process !== 'undefined' && process && process.env) ? process.env.API_KEY : '';
     
-    if (apiKey) {
+    if (apiKey && apiKey.length > 0) {
         ai = new GoogleGenAI({ apiKey });
     } else {
-        console.warn("AI Key not found. AI features disabled.");
+        console.warn("AI Key not found in process.env.API_KEY. AI features disabled.");
+        globalAIFailure = true;
     }
 } catch (e) {
-    console.warn("GoogleGenAI init failed:", e);
+    console.warn("GoogleGenAI init failed (likely missing key or network issue):", e);
+    globalAIFailure = true;
 }
 
 export const isAIEnabled = (): boolean => !!ai && !globalAIFailure;
@@ -28,7 +31,7 @@ export const isAIEnabled = (): boolean => !!ai && !globalAIFailure;
 let chatSession: Chat | null = null;
 
 export const initializeChat = async (): Promise<string> => {
-  if (!ai || globalAIFailure) return "AI 功能暂时不可用。";
+  if (!ai || globalAIFailure) return "AI 功能暂时不可用 (API Key Missing)。";
   
   try {
     const chat = ai.chats.create({
@@ -107,6 +110,12 @@ export const getAIMove = async (
   roundNumber: number = 1,
   mianZhangCard: Card | null = null // Added parameter
 ): Promise<Card | null> => {
+  // If AI is disabled or crashed, fallback to simple heuristic immediately
+  if (globalAIFailure || !ai) {
+      // Fallback: Play first valid card (simplified)
+      return aiPlayer.hand.length > 0 ? aiPlayer.hand[0] : null;
+  }
+
   if (aiPlayer.hand.length === 0) return null;
 
   const estimatedRound = 8 - aiPlayer.hand.length;

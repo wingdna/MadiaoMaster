@@ -11,7 +11,15 @@ const safeLog = (msg: string, type: 'info' | 'error' = 'info') => {
     else console[type](msg);
 };
 
-safeLog("index.tsx: Imports resolved. Starting mount sequence...");
+safeLog("index.tsx: Script execution started.");
+
+// CLEAR WATCHDOG IMMEDIATELY ON SCRIPT LOAD to prevent false positives if render takes time
+const w = window as any;
+if (w.bootTimeout) {
+    clearTimeout(w.bootTimeout);
+    w.bootTimeout = null;
+    safeLog("Watchdog cleared. Starting React mount...");
+}
 
 interface ErrorBoundaryProps {
     children?: ReactNode;
@@ -24,7 +32,6 @@ interface ErrorBoundaryState {
 
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
     public state: ErrorBoundaryState = { hasError: false, error: null };
-    // Explicitly declare props to fix TS error in some environments
     public readonly props: Readonly<ErrorBoundaryProps>;
 
     constructor(props: ErrorBoundaryProps) {
@@ -49,14 +56,14 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
                     color: '#ff6b6b', 
                     fontFamily: 'monospace', 
                     background: '#1a0505', 
-                    height: '100vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    height: '100vh', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center' 
                 }}>
                     <h1 style={{ fontSize: '24px', marginBottom: '20px' }}>Application Error</h1>
-                    <pre style={{ background: 'rgba(0,0,0,0.3)', padding: '20px', borderRadius: '4px' }}>
+                    <pre style={{ background: 'rgba(0,0,0,0.3)', padding: '20px', borderRadius: '4px', maxWidth: '80vw', overflow: 'auto' }}>
                         {this.state.error?.message}
                     </pre>
                     <button 
@@ -80,9 +87,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 }
 
 const mount = () => {
-    safeLog("Mounting React Root...");
     const rootEl = document.getElementById('root');
-    
     if (!rootEl) {
         safeLog("FATAL: #root element not found!", 'error');
         return;
@@ -95,16 +100,9 @@ const mount = () => {
                 <App />
             </ErrorBoundary>
         );
-        safeLog("Render command dispatched.");
+        safeLog("React Root Rendered.");
 
-        // Register Service Worker for PWA capability
-        serviceWorkerRegistration.register();
-
-        // CLEAR WATCHDOG
-        const w = window as any;
-        if (w.bootTimeout) clearTimeout(w.bootTimeout);
-
-        // Cleanup loader
+        // Cleanup loader visuals after a slight delay to allow React to paint
         setTimeout(() => {
             const loader = document.getElementById('app-loader');
             if (loader) {
@@ -113,7 +111,9 @@ const mount = () => {
                     if (loader.parentNode) loader.parentNode.removeChild(loader);
                 }, 500);
             }
-        }, 800);
+        }, 500);
+
+        serviceWorkerRegistration.register();
 
     } catch (e: any) {
         safeLog("Mount Exception: " + (e.message || String(e)), 'error');

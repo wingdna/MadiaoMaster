@@ -4,6 +4,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!-- Fix relative paths for GitHub Pages -->
+    <base href="./" />
     
     <!-- PWA Settings -->
     <meta name="theme-color" content="#050202" />
@@ -33,7 +35,6 @@
         background-color: #050202; 
         color: #E8E4D9;
         -webkit-tap-highlight-color: transparent;
-        /* Prevent elastic scrolling on iOS PWA */
         overscroll-behavior: none;
       }
       
@@ -62,18 +63,19 @@
       }
 
       #boot-log {
-        position: fixed; bottom: 0; left: 0; width: 100%; height: 150px;
-        background: rgba(0, 0, 0, 0.9); color: #00ff00;
-        font-family: monospace; font-size: 10px;
+        position: fixed; bottom: 0; left: 0; width: 100%; height: 30vh;
+        background: rgba(0, 0, 0, 0.95); color: #00ff00;
+        font-family: monospace; font-size: 11px;
         padding: 10px; overflow-y: auto; z-index: 10000;
-        border-top: 1px solid #333; pointer-events: none;
+        border-top: 2px solid #8c1c0b; pointer-events: auto;
         display: none; 
+        white-space: pre-wrap;
       }
       
-      .log-entry { margin-bottom: 2px; border-bottom: 1px solid #111; word-break: break-all; }
-      .log-error { color: #ff3333; }
+      .log-entry { margin-bottom: 4px; border-bottom: 1px solid #333; word-break: break-all; padding-bottom: 2px; }
+      .log-error { color: #ff3333; font-weight: bold; border-left: 3px solid red; padding-left: 5px; }
+      .log-warn { color: #ffcc00; }
 
-      /* ESSENTIAL CSS */
       .preserve-3d { transform-style: preserve-3d; }
       .perspective-container { perspective: 1200px; overflow: hidden; }
       .font-calligraphy { font-family: 'Ma Shan Zheng', cursive; }
@@ -94,9 +96,6 @@
       .custom-scrollbar::-webkit-scrollbar-track { background: #0f0a08; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #3e2b22; border-radius: 3px; }
 
-      /* --- NEW COMBAT & ATMOSPHERE ANIMATIONS (Refined for Inner-Only transforms) --- */
-
-      /* 1. Heavy Smash (Child Animation) */
       @keyframes card-smash-inner {
         0% { transform: scale(0.5) translateZ(100px); opacity: 0; }
         60% { transform: scale(1.8) translateZ(200px) rotateZ(-5deg); opacity: 1; }
@@ -106,7 +105,6 @@
       }
       .animate-card-smash { animation: card-smash-inner 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 
-      /* 2. Slash/Cut Effect (Overlay) */
       @keyframes slash-effect {
         0% { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); opacity: 0; }
         20% { opacity: 1; }
@@ -115,7 +113,6 @@
       }
       .animate-slash { animation: slash-effect 0.4s ease-out forwards; }
 
-      /* 3. Wither/Burn (Child Animation) */
       @keyframes card-wither-inner {
         0% { transform: scale(1.1) translateZ(50px); filter: brightness(1.2); opacity: 0; }
         50% { transform: scale(0.9) translateZ(10px) rotateZ(5deg); filter: brightness(0.6) sepia(0.8) grayscale(0.8); opacity: 1; }
@@ -124,7 +121,6 @@
       }
       .animate-card-wither { animation: card-wither-inner 0.8s ease-out forwards; }
 
-      /* 4. Shadow Sway */
       @keyframes shadow-sway {
         0% { transform: translateX(0px) rotate(0deg) scale(1); }
         33% { transform: translateX(15px) rotate(1deg) scale(1.02); }
@@ -133,7 +129,6 @@
       }
       .animate-shadow-sway { animation: shadow-sway 12s ease-in-out infinite; }
 
-      /* 5. Actor Move */
       @keyframes actor-move {
         0% { transform: translateX(-20px) scaleY(1); opacity: 0.3; }
         50% { transform: translateX(20px) scaleY(1.05); opacity: 0.5; }
@@ -145,63 +140,85 @@
 
     <!-- LOGGER INIT & FAILSAFE -->
     <script>
+      // Polyfill process for libs
+      window.process = window.process || {};
+      window.process.env = window.process.env || {};
+      window.process.env.NODE_ENV = 'production';
+
+      window.showLog = function() {
+        const log = document.getElementById('boot-log');
+        if(log) log.style.display = 'block';
+      };
+
       window.logToScreen = function(msg, type = 'info') {
         const log = document.getElementById('boot-log');
-        if (log && type === 'error') {
-          log.style.display = 'block';
+        if (log) {
           const div = document.createElement('div');
-          div.className = 'log-entry ' + (type === 'error' ? 'log-error' : '');
-          div.textContent = `[${new Date().toISOString().substr(11,8)}] ${msg}`;
+          div.className = 'log-entry ' + (type === 'error' ? 'log-error' : (type === 'warn' ? 'log-warn' : ''));
+          div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
           log.appendChild(div);
+          if (type === 'error') {
+             log.style.display = 'block';
+             log.scrollTop = log.scrollHeight;
+          }
         }
-        console[type === 'error' ? 'error' : 'log'](msg);
+        console[type === 'error' ? 'error' : (type === 'warn' ? 'warn' : 'log')](msg);
       };
       
-      window.onerror = function(msg, url, line) {
-        window.logToScreen(`Global Error: ${msg} @ ${line}`, 'error');
+      window.onerror = function(msg, url, line, col, error) {
+        window.logToScreen(`Global Error: ${msg}\nLine: ${line}:${col}\nURL: ${url}`, 'error');
+        if (String(msg).includes('SyntaxError') || String(msg).includes('Unexpected token')) {
+             window.logToScreen("HINT: You must use 'npm run build' to compile TypeScript/JSX.", 'warn');
+        }
         return false; 
       };
 
-      // Watchdog: If app doesn't take over in 8 seconds, offer reload
+      window.onunhandledrejection = function(event) {
+        window.logToScreen(`Unhandled Rejection: ${event.reason}`, 'error');
+      };
+
+      // Watchdog: 15s timeout to allow slow builds/network
       window.bootTimeout = setTimeout(() => {
           const text = document.getElementById('loader-text');
           const spin = document.getElementById('loader-spinner');
           if (text) {
-              text.innerText = "INITIALIZATION TIMEOUT. TAP TO RETRY.";
+              text.innerText = "INITIALIZATION TIMEOUT.";
               text.style.color = "#ff6b6b";
-              text.style.cursor = "pointer";
-              text.onclick = () => window.location.reload();
           }
           if (spin) spin.style.borderColor = "#ff0000";
-      }, 8000);
-    </script>
-
-    <script type="importmap">
-    {
-      "imports": {
-        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
-        "react": "https://esm.sh/react@18.2.0?dev",
-        "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime?dev",
-        "react/": "https://esm.sh/react@18.2.0/?dev",
-        "react-dom": "https://esm.sh/react-dom@18.2.0?deps=react@18.2.0&dev",
-        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0&dev",
-        "react-dom/": "https://esm.sh/react-dom@18.2.0/?deps=react@18.2.0&dev"
-      }
-    }
-    </script>
-
-    <script>
-      window.process = window.process || {};
-      window.process.env = window.process.env || {};
-      window.process.env.NODE_ENV = 'production';
+          
+          window.logToScreen("Boot watchdog timed out. App did not mount in 15s.", "error");
+          window.logToScreen("Check if 'npm run dev' or 'npm run build' was used.", "warn");
+          
+          const logBtn = document.createElement('button');
+          logBtn.innerText = "VIEW LOGS / RETRY";
+          logBtn.style.cssText = "margin-top:20px; padding:10px; border:1px solid #8c1c0b; color:#8c1c0b; background:black; cursor:pointer;";
+          logBtn.onclick = () => window.location.reload();
+          const loader = document.getElementById('app-loader');
+          if(loader) loader.appendChild(logBtn);
+          window.showLog();
+          
+      }, 15000);
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- STANDARD ENTRY POINT -->
-    <script type="module" src="index.tsx"></script>
-  </head>
+    <!-- VITE ENTRY POINT -->
+    <script type="module" src="./index.tsx"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "vite": "https://esm.sh/vite@^7.2.7",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+  }
+}
+</script>
+</head>
   <body>
     <div id="app-loader">
         <div id="loader-spinner"></div>

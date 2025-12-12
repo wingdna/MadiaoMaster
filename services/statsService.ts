@@ -5,10 +5,14 @@ import { syncGameStats, initSupabase, getSupabaseConfig } from './cloudService';
 
 const STATS_KEY = 'ma_diao_stats_v1';
 
-// Init Cloud if keys exist on load
-const config = getSupabaseConfig();
-if (config.url && config.key) {
-    initSupabase(config.url, config.key);
+// Init Cloud if keys exist on load - WRAPPED IN TRY/CATCH to prevent top-level module crash
+try {
+    const config = getSupabaseConfig();
+    if (config.url && config.key) {
+        initSupabase(config.url, config.key);
+    }
+} catch (e) {
+    console.warn("Failed to auto-init cloud service:", e);
 }
 
 export const loadGameStats = (): GameHistory => {
