@@ -44,37 +44,32 @@ export const TableBorderFlow = React.memo(({ activePlayerId, isVertical = false 
         <div className="absolute inset-0 pointer-events-none z-[12] overflow-visible mix-blend-screen" style={{ transform: isVertical ? 'rotate(90deg)' : 'none', transition: 'transform 0.5s ease-out' }}>
             <svg className="w-full h-full overflow-visible" viewBox={VIEWBOX_STR} preserveAspectRatio="xMidYMid meet">
                 <defs>
-                    <filter id="soft-gold-glow" x="-50%" y="-50%" width="200%" height="200%">
-                        <feGaussianBlur stdDeviation="4" result="blur"/>
-                        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-                    </filter>
-                    
-                    {/* Classic Gold Tea Gradient */}
+                    {/* V2: Removed Blur for "Sharp Brightness". Hard liquid gold feel. */}
                     <linearGradient id="teaFlowGrad" gradientUnits="userSpaceOnUse" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#8c6239" stopOpacity="0" />
-                        <stop offset="30%" stopColor="#d4af37" stopOpacity="0.6" />
-                        <stop offset="50%" stopColor="#ffecb3" stopOpacity="1" />
-                        <stop offset="70%" stopColor="#d4af37" stopOpacity="0.6" />
+                        <stop offset="20%" stopColor="#d4af37" stopOpacity="0.4" />
+                        {/* Core is almost white-gold for maximum brightness without bloom */}
+                        <stop offset="50%" stopColor="#fff8e1" stopOpacity="1" /> 
+                        <stop offset="80%" stopColor="#d4af37" stopOpacity="0.4" />
                         <stop offset="100%" stopColor="#8c6239" stopOpacity="0" />
                     </linearGradient>
                 </defs>
                 <style>
                     {`
-                        @keyframes borderFlow {
-                            0% { stroke-dashoffset: 2000; } 
-                            100% { stroke-dashoffset: 0; }
+                        @keyframes borderFlowReverse {
+                            0% { stroke-dashoffset: 0; } 
+                            100% { stroke-dashoffset: 2000; }
                         }
                     `}
                 </style>
                 <path 
                     d={PATH_FULL_SHAPE} 
                     stroke="url(#teaFlowGrad)" 
-                    strokeWidth="2" 
+                    strokeWidth="3" 
                     fill="none" 
                     strokeLinecap="round" 
-                    filter="url(#soft-gold-glow)" 
                     strokeDasharray="300 1700" 
-                    style={{ animation: 'borderFlow 4s linear infinite' }}
+                    style={{ animation: 'borderFlowReverse 4s linear infinite' }}
                 />
             </svg>
         </div>
@@ -121,10 +116,10 @@ export const Compass = React.memo(({
     // Needle Logic
     const isDualRole = (pid: number) => pid === bankerId && pid === revealedBaiLaoId;
     const getPlayerColorValues = (pid: number) => {
-        if (isDualRole(pid)) return { main: '#ef4444', glow: '#ef4444' }; 
-        if (pid === bankerId) return { main: '#b91c1c', glow: '#ff0000' }; 
-        if (pid === revealedBaiLaoId) return { main: '#0d9488', glow: '#2dd4bf' }; 
-        return { main: '#d4af37', glow: '#ffeebb' }; 
+        if (isDualRole(pid)) return { main: '#ef4444', glow: '#ef4444', needle: '#dc2626' }; // Red (Banker+BaiLao)
+        if (pid === bankerId) return { main: '#b91c1c', glow: '#ff0000', needle: '#b91c1c' }; // Red (Banker)
+        if (pid === revealedBaiLaoId) return { main: '#0d9488', glow: '#2dd4bf', needle: '#0f766e' }; // Teal (BaiLao)
+        return { main: '#d4af37', glow: '#ffeebb', needle: '#b8860b' }; // Gold (Peasant)
     };
 
     const getIdentityLabel = (pid: number, defaultText: string) => {
@@ -173,6 +168,9 @@ export const Compass = React.memo(({
     // When Kai Chong starts, glass slides open (Top goes Up, Bottom goes Down)
     // We assume the Compass center is at Y=220.
     const lidTranslateY = isKaiChong ? 300 : 0; 
+
+    // CALCULATE ACTIVE NEEDLE COLOR
+    const activeColors = getPlayerColorValues(activePlayerId);
 
     return (
         <div className="relative w-full h-full pointer-events-none z-[0]" style={{ transformStyle: 'preserve-3d' }}>
@@ -270,7 +268,7 @@ export const Compass = React.memo(({
                 </svg>
             </div>
 
-            {/* 2. THE NEEDLE (Physical 3D Object) */}
+            {/* 2. THE NEEDLE (Physical 3D Object) - UPDATED V2 (Exquisite Shape) */}
             <div className="absolute inset-0 z-[100] flex items-center justify-center pointer-events-none" 
                  style={{ 
                      transformStyle: 'preserve-3d', 
@@ -281,30 +279,48 @@ export const Compass = React.memo(({
                       style={{ transform: `rotate(${rotation}deg)` }}>
                         
                         {/* Needle Shadow */}
-                        <div className="absolute top-1/2 left-1/2 w-4 h-32 bg-black blur-sm opacity-60"
+                        <div className="absolute top-1/2 left-1/2 w-4 h-40 bg-black blur-sm opacity-60"
                              style={{ 
-                                 transform: `translate(-50%, -50%) rotate(0deg) translateZ(-10px)`, 
-                                 clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)'
+                                 transform: `translate(-50%, -50%) rotate(0deg) translateZ(-15px)`, 
+                                 clipPath: 'polygon(50% 0%, 80% 40%, 50% 100%, 20% 40%)'
                              }}>
                         </div>
 
-                        {/* Needle Body */}
-                        <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-b-[90px] border-l-transparent border-r-transparent border-b-[#e6c278] relative filter drop-shadow-lg"
-                             style={{ transform: 'translateY(-30px)' }}>
-                             <div className="absolute left-[-1px] top-[10px] w-[2px] h-[70px] bg-white/40 blur-[1px]"></div>
+                        {/* Needle Main Body (Diamond Shape) */}
+                        <div 
+                            className="absolute top-1/2 left-1/2 w-6 h-48 -translate-x-1/2 -translate-y-[65%] transition-colors duration-700"
+                            style={{ 
+                                clipPath: 'polygon(50% 0%, 100% 85%, 50% 100%, 0% 85%)', // Diamond-like sword shape
+                                background: `linear-gradient(90deg, ${activeColors.needle} 40%, white 50%, ${activeColors.needle} 60%)`, // Metallic ridge effect
+                                boxShadow: '0 0 10px rgba(0,0,0,0.5)'
+                            }}
+                        >
+                        </div>
+
+                        {/* Needle Counterweight (Tail) */}
+                        <div 
+                            className="absolute top-1/2 left-1/2 w-4 h-16 -translate-x-1/2 translate-y-[20%] transition-colors duration-700"
+                            style={{ 
+                                clipPath: 'polygon(50% 100%, 100% 15%, 50% 0%, 0% 15%)', 
+                                background: `linear-gradient(90deg, #1a0505 40%, #3e2b22 50%, #1a0505 60%)` 
+                            }}
+                        >
                         </div>
                         
-                        {/* Center Cap */}
-                        <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-[20px] w-6 h-6 rounded-full bg-gradient-to-br from-[#fcd34d] to-[#78350f] shadow-lg border border-[#451a03] z-50"></div>
+                        {/* Center Cap (Jewel) */}
+                        <div 
+                            className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full shadow-lg border-2 border-[#451a03] z-50 transition-colors duration-700 overflow-hidden"
+                            style={{
+                                background: `radial-gradient(circle at 30% 30%, white, ${activeColors.glow}, ${activeColors.needle})`
+                            }}
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-tr from-black/40 to-transparent pointer-events-none"></div>
+                        </div>
                  </div>
             </div>
 
-            {/* 3. DIRECTION LABELS (Fade out slightly during Kai Chong) */}
+            {/* 3. DIRECTION LABELS */}
             <div className="absolute inset-0 z-[25] pointer-events-none" style={{ transform: 'translateZ(15px)', opacity: isKaiChong ? 0.3 : 1, transition: 'opacity 1s' }}>
-                 {/* 
-                    Mapping: 2=Top(N), 0=Bottom(S), 3=Left(W), 1=Right(E)
-                    We replace direction text with Identity if applicable.
-                 */}
                  <div className={getTextClass(2)} style={{ top: '25%', left: '50%' }}>{getIdentityLabel(2, '北')}</div>
                  <div className={getTextClass(0)} style={{ top: '75%', left: '50%' }}>{getIdentityLabel(0, '南')}</div>
                  <div className={getTextClass(3)} style={{ top: '50%', left: '32%' }}>{getIdentityLabel(3, '西')}</div>

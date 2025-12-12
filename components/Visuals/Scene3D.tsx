@@ -294,7 +294,7 @@ const getPlayerGlow = (player: Player) => {
 };
 
 // --- UPDATED BULLET CARD: COMBAT ANIMATIONS ---
-const BulletCard = React.memo(({ card, playerPos, spread, centerOffset, isFaceDown, isWinner }: any) => {
+const BulletCard = React.memo(({ card, playerPos, spread, centerOffset, isFaceDown, isWinner, isMobilePortrait }: any) => {
     // Determine animation class for INNER element
     const animClass = useMemo(() => {
         if (isWinner) return 'animate-card-smash'; // Victory: Smash/Slash
@@ -313,15 +313,28 @@ const BulletCard = React.memo(({ card, playerPos, spread, centerOffset, isFaceDo
         const { x: spreadX, y: spreadY } = spread;
         const { x: cx, y: cy } = centerOffset;
 
-        if (playerPos === 'Bottom') { tx = 0; ty = spreadY; }
-        else if (playerPos === 'Top') { tx = 0; ty = -spreadY; }
+        if (playerPos === 'Bottom') { 
+            tx = 0; 
+            // Perspective Correction for Mobile Portrait:
+            // Pull Southern player's card closer to visually balance against the foreshortened Top card.
+            // This prevents the South card from looking like it's overlapping the center point more than the North one.
+            ty = isMobilePortrait ? spreadY * 0.9 : spreadY; 
+        }
+        else if (playerPos === 'Top') { 
+            tx = 0; 
+            // Perspective Correction for Mobile Portrait:
+            // Push Top player's card further out to counteract foreshortening that makes it look closer.
+            ty = isMobilePortrait ? -spreadY * 1.15 : -spreadY; 
+        }
         else if (playerPos === 'Left') { tx = -spreadX; ty = 0; }
         else if (playerPos === 'Right') { tx = spreadX; ty = 0; }
 
         tx += cx;
         ty += cy;
 
-        const baseZ = isWinner ? 80 : 35; // Winner pops up above others
+        // Anti-Clipping Fix: Increase Base Z to prevent bottom of card (when rotated) from clipping into table surface.
+        // Rotated cards dip below their anchor point.
+        const baseZ = isWinner ? 80 : 35; 
         
         // Apply position to Outer Container
         const raf = requestAnimationFrame(() => {
@@ -332,7 +345,7 @@ const BulletCard = React.memo(({ card, playerPos, spread, centerOffset, isFaceDo
             });
         });
         return () => cancelAnimationFrame(raf);
-    }, [playerPos, spread, centerOffset, isWinner]);
+    }, [playerPos, spread, centerOffset, isWinner, isMobilePortrait]);
 
     return (
         <div className="absolute left-1/2 top-1/2 w-16 h-24" style={{ ...posStyle, transformStyle: 'preserve-3d' }}>
@@ -370,6 +383,7 @@ const TableCards = React.memo(({ cards, winnerId, layoutConfig, players }: any) 
                         centerOffset={layoutConfig.cardCenterOffset}
                         isFaceDown={tc.isFaceDown}
                         isWinner={isWinner}
+                        isMobilePortrait={layoutConfig.isVertical} // Pass layout flag
                     />
                 );
             })}
