@@ -5,31 +5,30 @@ import { LeadingEffectType, Suit, CardColor } from '../types';
 
 const MingAtmosphere: React.FC = () => {
     return (
-        <div className="absolute inset-0 pointer-events-none z-[-1] overflow-hidden bg-[#150f0a]">
-            {/* Warm Scholar's Studio Lighting - Vignette */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#2c1e16_20%,#080402_100%)]"></div>
-            
-            {/* Candle Flicker Top Right */}
-            <div className="absolute top-[10%] right-[20%] w-[400px] h-[400px] bg-[#ffaa55] opacity-5 blur-[120px] rounded-full animate-candleFlicker"></div>
-            
-            {/* Wood Texture Overlay */}
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-10 mix-blend-overlay"></div>
+        <div className="absolute inset-0 pointer-events-none z-[-1] overflow-hidden bg-[#0a0604]">
+            {/* Dark, warm ambient enclosure */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,#2d1a10_0%,#050202_90%)]"></div>
+            {/* Subtle dust particles */}
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] mix-blend-overlay"></div>
         </div>
     );
 };
 
 const MingCardBack: React.FC<{ isSmall?: boolean }> = ({ isSmall }) => (
-    <div className="absolute inset-0 w-full h-full rounded-[inherit] overflow-hidden bg-[#3d2314] flex items-center justify-center shadow-inner">
-        {/* Fine Wood Texture */}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-60 mix-blend-multiply"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-black/70"></div>
-        
-        {/* Carved Border */}
-        <div className="absolute inset-1.5 border border-[#8c6239] rounded-[2px] opacity-80 shadow-[inset_0_0_2px_rgba(0,0,0,0.8)]"></div>
-        
+    <div className="absolute inset-0 w-full h-full rounded-[inherit] overflow-hidden bg-[#26140c] flex items-center justify-center shadow-inner border border-[#3e2b22]">
+        {/* Wood Texture on Back */}
+        <div className="absolute inset-0 opacity-40" 
+             style={{ 
+                 background: `
+                    repeating-radial-gradient(circle at 0 0, transparent 0, #26140c 10px),
+                    repeating-linear-gradient(45deg, #3e2b22, #26140c 10px, #3e2b22 20px)
+                 ` 
+             }}>
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-black/80 to-transparent"></div>
         {!isSmall && (
-            <div className="relative z-10 w-10 h-16 bg-[#5c1a1a] shadow-[1px_1px_3px_rgba(0,0,0,0.6)] flex items-center justify-center rounded-[2px] opacity-95 border border-[#8c6239]/30">
-                <span className="text-[#e8e4d9] font-serif font-bold text-2xl writing-vertical-rl tracking-widest drop-shadow-md opacity-90">明</span>
+            <div className="relative z-10 w-8 h-20 border-[1px] border-[#8c6239]/40 flex items-center justify-center rounded-[2px] bg-[#3d1e11]/90 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.8)] animate-pulse-slow">
+                <span className="text-[#e6c278] font-serif font-bold text-2xl writing-vertical-rl tracking-widest drop-shadow-[0_1px_2px_black] opacity-90 select-none">明</span>
             </div>
         )}
     </div>
@@ -38,82 +37,108 @@ const MingCardBack: React.FC<{ isSmall?: boolean }> = ({ isSmall }) => (
 const MingEffectOverlay: React.FC<{ effect: LeadingEffectType }> = ({ effect }) => {
     if (!effect) return null;
     return (
-        <div className="absolute inset-0 rounded-[inherit] pointer-events-none z-[50]">
-            <div className="absolute -inset-[3px] border-2 border-[#d4af37] border-double rounded-[inherit] opacity-60 animate-pulse"></div>
+        <div className="absolute inset-[-4px] rounded-[inherit] pointer-events-none z-[50]">
+            <div className="absolute inset-0 border-[1px] border-[#d4af37] rounded-[inherit] opacity-60 animate-pulse shadow-[0_0_15px_#d4af37,inset_0_0_10px_#d4af37]"></div>
         </div>
     );
 };
 
-// ... Simplified Character Assets for brevity, style matches Ming ...
-const BodyFront: React.FC = () => <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl filter sepia-[0.3] brightness-75"><path d="M25,100 C25,75 35,45 50,45 C65,45 75,75 75,100 Z" fill="#8c6239" /></svg>;
-const BodySide: React.FC = () => <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl filter sepia-[0.3] brightness-75"><path d="M35,100 C35,75 45,40 60,45 C70,50 70,100 70,100 Z" fill="#8c6239" /></svg>;
-const Chair: React.FC = () => <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-md"><path d="M10,100 L10,25 Q50,15 90,25 L90,100" fill="none" stroke="#2b1810" strokeWidth="4" /></svg>;
+// ... Characters ...
+const BodyFront: React.FC = () => (
+    <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)] filter contrast-125 sepia-[0.3]">
+        <defs>
+            <filter id="silkFlow"><feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+        </defs>
+        <path d="M20,100 L20,50 Q50,40 80,50 L80,100 Z" fill="#2d1a10" stroke="none" filter="url(#silkFlow)" opacity="0.9" />
+    </svg>
+);
+const Chair: React.FC<{ position?: string }> = ({ position }) => {
+    return (
+        <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl">
+            <path d="M15,100 L15,30 Q15,10 50,15 Q85,10 85,30 L85,100" fill="none" stroke="#3e2723" strokeWidth="6" strokeLinecap="round" />
+            <path d="M20,100 L20,40 L80,40 L80,100" fill="#26140c" opacity="0.8" />
+        </svg>
+    );
+};
 
 export const MingSkin: ISkin = {
     id: 'ming_scholar',
-    name: 'Ming Scholar (Wood)',
-    description: 'Polished Huanghuali wood, brass fittings, and Xuan paper.',
+    name: 'Ming Scholar (Huanghuali)',
+    description: 'Aged Huanghuali wood with ghost face grains and deep amber patina.',
 
     layout: {
-        backgroundClass: "bg-[#1a120b]", 
+        backgroundClass: "bg-[#0a0604]", 
         atmosphereComponent: MingAtmosphere,
-        // Huanghuali Table: polished, reddish-brown
-        tableSurfaceClass: "bg-[#3d2314] shadow-[inset_0_0_150px_rgba(0,0,0,0.9),0_30px_80px_black] border-[6px] border-[#2b1810] rounded-[8px]",
-        tableSurfaceStyle: {
-            backgroundImage: `
-                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05), transparent 70%),
-                url('https://www.transparenttextures.com/patterns/wood-pattern.png')
-            `,
-            backgroundSize: 'cover, 400px',
-            backgroundBlendMode: 'soft-light, multiply'
-        },
-        tableBorderClass: "bg-[#1f1008] border-t border-[#5c3a21]/50 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]"
+        
+        tableSurfaceClass: "rounded-[12px] overflow-hidden shadow-[0_50px_120px_black] border border-[#5c3a21]/50",
+        
+        // 1. SOLID BASE COLOR (Deep Reddish Brown)
+        tableBaseColor: '#2b1105', 
+        
+        // 2. TEXTURE (Ghost Face Pattern & Grain)
+        tableTexture: `
+            radial-gradient(circle at 30% 40%, rgba(20, 10, 5, 0.4) 0%, transparent 60%),
+            repeating-linear-gradient(110deg, rgba(62, 39, 35, 0.1) 0px, rgba(62, 39, 35, 0.1) 1px, transparent 1px, transparent 8px),
+            radial-gradient(ellipse at 70% 60%, rgba(139, 69, 19, 0.15), transparent 40%),
+            conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(0,0,0,0.2) 20deg, transparent 40deg)
+        `,
+        tableTextureSize: 'auto',
+        
+        // Enable Patina/Reflection layer in Scene3D
+        tableReflectivity: true, 
+
+        tableBorderClass: "bg-[#1a0a05] border-t border-[#3e2b22] brightness-75"
     },
 
     card: {
         getContainerClass: (props: CardStyleProps) => {
             let sizeClass = 'w-16 h-24 md:w-20 md:h-32';
             if (props.isSmall) sizeClass = props.isRotated ? 'w-14 h-10' : 'w-10 h-14';
-            else if (props.isTrick) sizeClass = props.isRotated ? 'w-24 h-16 md:w-28 md:h-20' : 'w-16 h-24 md:w-20 md:h-28';
-            else if (props.isHand) sizeClass = props.isRotated ? 'w-20 h-12 md:w-24 md:h-16' : 'w-14 h-22 md:w-20 md:h-32';
-
-            // Antique Xuan Paper
-            let bgClass = props.isInverted ? 'bg-[#2b1f18]' : 'bg-[#e6dccf]'; 
-            if (props.isFaceDown) bgClass = 'bg-[#2b1810]'; 
-            if (props.isDisabled) bgClass = 'bg-[#a39e93] grayscale opacity-80';
-
-            let hoverClass = 'transition-transform duration-200 ease-out';
-            if (!props.isFaceDown && !props.isHand && !props.isDisabled) {
-                hoverClass += ' hover:-translate-y-1 hover:shadow-lg cursor-pointer hover:rotate-1';
+            else if (props.isTrick) sizeClass = props.isRotated ? 'w-24 h-14 md:w-32 md:h-20' : 'w-14 h-24 md:w-20 md:h-32';
+            else if (props.isHand) sizeClass = props.isRotated ? 'w-20 h-12 md:w-24 md:h-16' : 'w-14 h-24 md:w-20 md:h-32'; 
+            
+            // Aged Paper / Woodblock Print Look
+            let bgClass = props.isInverted 
+                ? 'bg-[#26140c] text-[#d9c7b0] border border-[#5c3a21]' 
+                : 'bg-[#e8e4d9] text-[#2b1810]'; 
+            
+            if (props.isFaceDown) bgClass = 'bg-[#26140c]';
+            if (props.isDisabled) bgClass = 'bg-[#1a1a1a] opacity-40 grayscale';
+            
+            let hoverClass = 'transition-all duration-300 ease-out';
+            if (!props.isFaceDown && !props.isHand && !props.isDisabled) { 
+                hoverClass += ' hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(0,0,0,0.7)] cursor-pointer hover:brightness-110'; 
             }
-
-            let transformClass = '';
-            if (props.isSelected) transformClass = '-translate-y-4 z-[100] ring-1 ring-[#8c6239]';
-
-            return `relative flex flex-col group rounded-[2px] ${sizeClass} ${bgClass} ${hoverClass} ${transformClass}`;
+            
+            let transformClass = ''; 
+            if (props.isSelected) transformClass = '-translate-y-4 scale-105 z-[100] shadow-[0_0_30px_rgba(217,199,176,0.4)]';
+            
+            // Add a subtle texture class to the container via utility if needed, 
+            // but Card.tsx handles inner texture.
+            return `relative flex flex-col group rounded-[4px] ${sizeClass} ${bgClass} ${hoverClass} ${transformClass}`;
         },
         getMainColorClass: (color, isInverted) => {
-            if (isInverted) return 'text-[#d9c7b0] font-serif';
-            // Faded Ink
-            if (color === CardColor.RED) return 'text-[#8f1f1f] font-serif font-bold opacity-80 mix-blend-multiply'; 
-            if (color === CardColor.GREEN) return 'text-[#1e4a2e] font-serif font-bold opacity-80 mix-blend-multiply'; 
-            return 'text-[#1a1a1a] font-serif font-bold opacity-90 mix-blend-multiply'; 
+            // Woodblock Ink Effect
+            if (isInverted) return 'text-[#d9c7b0] font-serif tracking-widest opacity-90 drop-shadow-sm'; 
+            if (color === CardColor.RED) return 'text-[#8c1c0b] font-bold font-calligraphy opacity-90 mix-blend-multiply'; 
+            if (color === CardColor.GREEN) return 'text-[#2e4c2e] font-bold font-calligraphy opacity-95 mix-blend-multiply'; 
+            return 'text-[#1a1a1a] font-bold font-calligraphy opacity-90 mix-blend-multiply'; 
         },
         getPokerColorClass: (suit, isInverted) => {
-            if (isInverted) return 'text-[#d9c7b0]';
+            if (isInverted) return 'text-[#c5a059]';
             const isRedSuit = suit === Suit.STRINGS || suit === Suit.TEXTS;
-            return isRedSuit ? 'text-[#8f1f1f]' : 'text-[#1a1a1a]';
+            return isRedSuit ? 'text-[#8c1c0b]' : 'text-[#1a1a1a]';
         },
         getBorderClass: (props) => {
-            let borderClass = props.isInverted ? 'border-[#5c4025]' : 'border-[#d1cbb8]';
-            if (props.isFaceDown) borderClass = 'border-[#1f1008]'; 
-            if (props.isWinner) return 'border-2 border-[#d4af37]';
-            if (props.isSelected) return 'border-2 border-[#8c6239]';
-            return `border ${borderClass}`;
+            if (props.isFaceDown) return 'border border-[#3e2b22]';
+            if (props.isWinner) return 'border-[2px] border-[#d4af37]';
+            if (props.isSelected) return 'border-[1px] border-[#8c6239]';
+            // Slight inset shadow for paper feel
+            return 'border-[0.5px] border-[#a8a499]/50 shadow-[inset_0_0_10px_rgba(0,0,0,0.05)]';
         },
         getShadowClass: (props) => {
-            if (props.isFaceDown) return 'shadow-[2px_2px_6px_rgba(0,0,0,0.8)]'; 
-            return 'shadow-[1px_1px_3px_rgba(0,0,0,0.3)]'; 
+            if (props.isFaceDown) return 'shadow-[0_4px_10px_rgba(0,0,0,0.8)]'; 
+            return 'shadow-[1px_2px_6px_rgba(0,0,0,0.3)]';
         },
         BackComponent: MingCardBack,
         EffectOverlay: MingEffectOverlay
@@ -121,37 +146,31 @@ export const MingSkin: ISkin = {
 
     hud: {
         avatarContainerClass: (isMyTurn) => `
-            relative w-20 h-20 md:w-24 md:h-24 rounded-sm flex items-center justify-center 
-            transition-all duration-500 border-4 border-[#5c3a21]
+            relative w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center 
+            transition-all duration-700 border-[3px] 
             ${isMyTurn 
-                ? 'bg-[#3d2314] shadow-[0_0_25px_rgba(140,98,57,0.4)] scale-105 z-50 ring-2 ring-[#d4af37]' 
-                : 'bg-[#1a0f0a] opacity-90'}
+                ? 'bg-[#2b1105] border-[#d4af37] shadow-[0_0_40px_rgba(212,175,55,0.3)] scale-105 z-50 ring-2 ring-[#5c3a21]/50' 
+                : 'bg-[#1a0a05] border-[#3e2b22] opacity-80 sepia-[0.4]'}
         `,
         buttonClass: (disabled) => `
-            relative min-w-[150px] h-14 flex items-center justify-center transition-all duration-200 font-serif tracking-[0.2em] rounded-[2px] text-sm font-bold shadow-lg
+            relative min-w-[150px] h-14 rounded-[2px] flex items-center justify-center transition-all duration-300 font-serif tracking-[0.25em] font-bold shadow-lg text-sm
             ${!disabled 
-                ? 'bg-[#8c6239] text-[#2b1810] border-b-4 border-[#5c3a21] active:border-b-0 active:translate-y-1 hover:bg-[#a67c52]' 
-                : 'bg-[#3d2b23] text-[#5c4a40] border-b-4 border-[#2b1e18] cursor-not-allowed'}
+                ? 'bg-gradient-to-b from-[#3e2b22] to-[#26140c] text-[#d9c7b0] border border-[#5c4025] hover:border-[#d4af37] hover:text-[#fff] shadow-[0_5px_15px_rgba(0,0,0,0.5)]' 
+                : 'bg-[#1a1a1a] text-[#444] border border-[#333] cursor-not-allowed'}
         `,
-        modalOverlayClass: "fixed inset-0 z-[300] flex items-center justify-center bg-[#0f0502]/98 backdrop-blur-md p-4 animate-fade-in font-serif",
-        modalContentClass: `
-            relative w-full max-w-5xl bg-[#1a120b] 
-            border-[4px] border-[#3d1e11] 
-            rounded-[4px] shadow-[0_0_100px_black]
-            text-[#d9c7b0]
-            bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]
-        `
+        modalOverlayClass: "fixed inset-0 z-[300] flex items-center justify-center bg-[#050302]/95 backdrop-blur-xl p-4 animate-fade-in font-serif",
+        modalContentClass: "bg-[#1a0d08] border border-[#3e2b22] p-8 w-full max-w-5xl rounded-[2px] shadow-[0_0_100px_black] relative overflow-hidden text-[#d9c7b0] bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]"
     },
 
     lighting: {
-        StoveLighting: () => null, 
-        TableBorderFlow: () => null 
+        StoveLighting: () => null,
+        TableBorderFlow: () => null
     },
 
     character: {
         bodyFront: BodyFront,
-        bodySideLeft: BodySide,
-        bodySideRight: BodySide,
+        bodySideLeft: BodyFront,
+        bodySideRight: BodyFront,
         headOutline: '',
         chairComponent: Chair
     }

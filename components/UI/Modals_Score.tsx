@@ -13,7 +13,7 @@ const CardZoomOverlay = ({ card, onClose }: { card: Card | null, onClose: () => 
             <div className="relative transform scale-[1.5] md:scale-[2.0] transition-transform duration-300 shadow-[0_0_50px_rgba(0,0,0,1)] rounded-xl" onClick={(e) => e.stopPropagation()}>
                 {/* Render a large, interactive-looking card */}
                 <div className="w-40 h-64 pointer-events-none">
-                    <CardComponent card={card} isTrick={false} isHand={false} isSmall={false} />
+                    <CardComponent card={card} isTrick={false} isHand={false} isSmall={false} isFaceDown={false} isInverted={card.isPot} />
                 </div>
             </div>
             <div className="absolute bottom-10 text-white/50 text-xs md:text-sm font-serif tracking-[0.3em] animate-pulse">
@@ -36,6 +36,12 @@ const truncateName = (name: string) => {
     return name.length > 8 ? name.substring(0, 8) + '...' : name;
 };
 
+// HELPER: Get Flag URL
+const getFlagUrl = (countryCode: string | undefined) => {
+    const code = countryCode ? countryCode.toLowerCase() : 'cn'; 
+    return `https://flagcdn.com/w40/${code}.png`;
+};
+
 const ScoreRow: React.FC<ScoreRowProps> = ({ label, score, cards, highlightInverted, onCardClick }) => (
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-white/5 p-3 hover:bg-white/5 transition-colors gap-2 md:gap-4 font-serif">
         <div className="w-full md:w-1/3">
@@ -45,8 +51,11 @@ const ScoreRow: React.FC<ScoreRowProps> = ({ label, score, cards, highlightInver
             {cards.map((c, i) => {
                 const isInverted = c.isPot || (highlightInverted && i === cards.length - 1);
                 return (
-                    <div key={i} className="cursor-zoom-in hover:scale-110 transition-transform z-10 scale-125 mx-1" onClick={(e) => { e.stopPropagation(); onCardClick(c); }}>
-                        <CardComponent card={c} isSmall isInverted={isInverted} />
+                    <div key={i} className="relative group cursor-zoom-in z-10 mx-1" onClick={(e) => { e.stopPropagation(); onCardClick(c); }}>
+                        <div className="transition-transform duration-200 group-hover:scale-125 group-hover:z-50 origin-center">
+                            {/* Force isLocked=true to prevent 3D flip effects on hover, ensure 2D scaling */}
+                            <CardComponent card={c} isSmall isInverted={isInverted} isFaceDown={false} isLocked={true} />
+                        </div>
                     </div>
                 );
             })}
@@ -96,7 +105,7 @@ export const ScoreModal = ({
         return (
             <div className="bg-black/40 p-4 md:p-6 animate-fade-in shadow-inner text-sm border-t border-white/10 backdrop-contrast-125">
                 
-                {/* Mobile Breakdown Grid (Only visible on small screens inside expansion) */}
+                {/* Mobile Breakdown Grid */}
                 <div className="grid grid-cols-5 gap-2 mb-6 md:hidden text-center bg-white/5 p-3 rounded-sm border border-white/5">
                     <div>
                         <div className="text-[8px] text-[#5c4025] uppercase">Diao</div>
@@ -127,8 +136,10 @@ export const ScoreModal = ({
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {res.allCapturedCards.map((c, i) => (
-                                <div key={i} className="origin-top-left opacity-90 hover:opacity-100 transition-all hover:scale-110 cursor-zoom-in z-10 scale-110 mx-1" onClick={(e) => { e.stopPropagation(); setZoomedCard(c); }}>
-                                    <CardComponent card={c} isSmall isInverted={c.isPot} />
+                                <div key={i} className="relative group cursor-zoom-in z-10 mx-1" onClick={(e) => { e.stopPropagation(); setZoomedCard(c); }}>
+                                    <div className="transition-transform duration-200 group-hover:scale-125 group-hover:z-50 origin-center">
+                                        <CardComponent card={c} isSmall isInverted={c.isPot} isFaceDown={false} isLocked={true} />
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -180,7 +191,6 @@ export const ScoreModal = ({
                     {/* Responsive Header Grid */}
                     <div className="grid grid-cols-12 gap-2 text-[10px] uppercase tracking-widest text-[#8c6239] mb-2 px-4 font-bold border-b border-[#3e2b22] pb-2">
                         <div className="col-span-8 md:col-span-4">Player</div>
-                        {/* Hide Breakdown on Mobile */}
                         <div className="hidden md:block col-span-1 text-center">Diao</div>
                         <div className="hidden md:block col-span-1 text-center">Pot</div>
                         <div className="hidden md:block col-span-1 text-center">Knock</div>
@@ -196,7 +206,8 @@ export const ScoreModal = ({
                         const playerObj = players.find(p => p.id === res.playerId);
                         const profile = playerObj?.profile;
                         const avatarUrl = profile?.avatar_url || `https://api.dicebear.com/9.x/miniavs/svg?seed=${playerObj?.name || 'Player'}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
-                        
+                        const flagUrl = getFlagUrl(profile?.country || 'cn');
+
                         return (
                             <div key={res.playerId} className={`group transition-all duration-300 border border-transparent rounded-sm ${isExpanded ? 'bg-white/5 border-white/5' : 'hover:bg-white/5'}`}>
                                 <div onClick={() => toggleExpand(res.playerId)} className="grid grid-cols-12 gap-2 items-center p-3 md:p-4 cursor-pointer">
@@ -204,8 +215,15 @@ export const ScoreModal = ({
                                         <div className={`w-5 h-5 md:w-6 md:h-6 flex items-center justify-center border text-[9px] md:text-[10px] font-serif rounded-sm ${isBanker ? 'border-red-800 text-red-500 bg-red-900/20' : 'border-[#333] text-[#666]'}`}>
                                             {isBanker ? '庄' : '闲'}
                                         </div>
-                                        <div className="relative w-8 h-8 rounded-full border border-[#3e2b22] overflow-hidden shrink-0 shadow-lg">
-                                            <img src={avatarUrl} alt="" className="w-full h-full object-cover filter brightness-90" />
+                                        <div className="relative">
+                                            <div className="relative w-8 h-8 rounded-full border border-[#3e2b22] overflow-hidden shrink-0 shadow-lg">
+                                                <img src={avatarUrl} alt="" className="w-full h-full object-cover filter brightness-90" />
+                                            </div>
+                                            {/* Flag Badge - Stamp Style */}
+                                            <div className="absolute -bottom-2 -right-2 w-5 h-4 bg-[#1a0505] border border-[#5c4025] shadow-md transform rotate-12 z-10 flex items-center justify-center p-[1px]">
+                                                <img src={flagUrl} alt={profile?.country} className="w-full h-full object-cover opacity-90" />
+                                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent to-white/20 pointer-events-none"></div>
+                                            </div>
                                         </div>
                                         <div className="flex flex-col overflow-hidden">
                                             <div className="flex items-center gap-1">

@@ -23,8 +23,6 @@ export interface CardStyleProps {
 }
 
 export interface CharacterAssets {
-    // Determine which view to show based on table position
-    // Updated to accept quality prop for optimization
     bodyFront: React.FC<{ colorTheme?: string; quality?: 'HIGH' | 'LOW' }>; 
     bodySideLeft: React.FC<{ colorTheme?: string; quality?: 'HIGH' | 'LOW' }>; 
     bodySideRight: React.FC<{ colorTheme?: string; quality?: 'HIGH' | 'LOW' }>; 
@@ -41,9 +39,14 @@ export interface ISkin {
     layout: {
         backgroundClass: string; 
         atmosphereComponent: React.FC<{ quality?: 'HIGH' | 'LOW' }>; 
-        tableSurfaceClass: string; 
-        tableSurfaceStyle?: React.CSSProperties; 
-        tableBorderClass: string;
+        
+        // TABLE SURFACE CONFIG (New Layered System)
+        tableSurfaceClass: string;      // Tailwind classes for shape (rounded), shadow, border
+        tableBaseColor: string;         // Hex code for the SOLID opaque background (Layer 1)
+        tableTexture?: string;          // CSS background-image string for grain/pattern (Layer 2)
+        tableTextureSize?: string;      // background-size property
+        tableBorderClass: string;       // Class for the 3D sides (thickness)
+        tableReflectivity?: boolean;    // Enables mirror/patina layer
     };
 
     // 2. Card Visuals
@@ -67,7 +70,7 @@ export interface ISkin {
     
     // 4. Effects
     lighting: {
-        StoveLighting: React.FC<{ activePlayerId: number }>;
+        StoveLighting: React.FC<{ activePlayerId: number; spotlightPos?: {x: string, y: string} | null }>;
         TableBorderFlow: React.FC<{ activePlayerId: number, isVertical?: boolean }>; 
     };
 

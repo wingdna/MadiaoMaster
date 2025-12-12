@@ -4,117 +4,149 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#050202" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Ma Diao Master</title>
     
-    <!-- Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="
-      default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://esm.sh;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      font-src 'self' https://fonts.gstatic.com;
-      img-src 'self' data: blob: https://*.transparenttextures.com https://api.dicebear.com https://xsgames.co https://api.qrserver.com;
-      connect-src 'self' https://esm.sh https://generativelanguage.googleapis.com https://*.supabase.co https://*.memfiredb.com;
-    ">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
 
-    <title>Ma Diao Master - Imperial Edition</title>
-
-    <!-- CRASH GUARD -->
-    <script>
-      window.addEventListener('error', function(event) {
-        const root = document.getElementById('root');
-        if (root && (!root.children.length || root.innerHTML === '')) {
-          const errDiv = document.createElement('div');
-          errDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #c5a059; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; font-family: sans-serif;`;
-          errDiv.innerHTML = `<h2 style="font-size:20px; margin-bottom:10px;">Startup Error</h2><pre style="color:#ff6b6b; font-size:12px; max-width:100%; white-space:pre-wrap; background:#111; padding:10px; border-radius:4px;">${event.message}</pre><p style="margin-top:20px; font-size:12px; color:#666;">Trying to reload might fix this.</p>`;
-          document.body.appendChild(errDiv);
-        }
-      });
-    </script>
-
-    <!-- Import Map: FIXED & CLEAN -->
-    <!-- Using specific versions without wildcards to ensure singleton React instance -->
-    <script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@0.1.1",
-    "react": "https://esm.sh/react@18.2.0?dev",
-    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime?dev",
-    "react-dom": "https://esm.sh/react-dom@18.2.0?dev&deps=react@18.2.0",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?dev&deps=react@18.2.0",
-    "react-dom/": "https://esm.sh/react-dom@^18.2.0",
-    "react/": "https://esm.sh/react@^18.2.0"
-  }
-}
-</script>
-
-    <!-- Polyfill -->
-    <script>
-      window.process = window.process || { env: { NODE_ENV: 'production' } };
-    </script>
-
-    <!-- Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              'void': '#050202',
-              'imperial-gold': '#C5A059',
-              'urushi-red': '#7A1212',
-            },
-            fontFamily: {
-              serif: ['"Noto Serif SC"', 'serif'],
-              calligraphy: ['"Ma Shan Zheng"', 'cursive', 'serif']
-            },
-            backgroundImage: {
-              'noise': "url('https://www.transparenttextures.com/patterns/noise.png')",
-            },
-            boxShadow: {
-              'lacquer-deep': '0 20px 50px -10px rgba(0, 0, 0, 0.95), inset 0 0 40px rgba(0, 0, 0, 0.8)',
-              'card-float': '0 15px 30px -5px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0,0,0,0.5)',
-              'gem-btn': 'inset 0 1px 5px rgba(255,255,255,0.1), 0 5px 20px rgba(0,0,0,0.8)',
-            },
-            animation: {
-              'shimmer-slow': 'shimmer 8s linear infinite',
-              'sway-slow': 'sway 25s ease-in-out infinite',
-              'breathe-subtle': 'breatheSubtle 5s ease-in-out infinite',
-              'pulse-slow-opacity': 'pulseOpacity 4s ease-in-out infinite',
-              'fade-in': 'fadeIn 0.5s ease-out forwards',
-              'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-              'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
-            },
-            keyframes: {
-              shimmer: { '0%': { backgroundPosition: '-100% 0' }, '100%': { backgroundPosition: '200% 0' } },
-              sway: { '0%, 100%': { transform: 'rotate(0deg)' }, '50%': { transform: 'rotate(2deg)' } },
-              breatheSubtle: { '0%, 100%': { opacity: '0.6' }, '50%': { opacity: '0.9' } },
-              pulseOpacity: { '0%, 100%': { opacity: '0.5' }, '50%': { opacity: '1' } },
-              fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-              fadeInUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
-              shake: { '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' }, '20%, 80%': { transform: 'translate3d(2px, 0, 0)' }, '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' }, '40%, 60%': { transform: 'translate3d(4px, 0, 0)' } }
-            }
-          }
-        }
-      }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;500;700;900&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
     <style>
-      body { background-color: #050202; color: #E8E4D9; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
-      .perspective-container { perspective: 1200px; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
+      html, body, #root { 
+        height: 100%; 
+        width: 100%; 
+        margin: 0; 
+        padding: 0; 
+        overflow: hidden; 
+        background-color: #050202; 
+        color: #E8E4D9;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      #app-loader {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: #050202; z-index: 9000;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        transition: opacity 0.5s ease-out;
+      }
+      
+      #loader-spinner {
+        width: 50px; height: 50px; 
+        border: 3px solid #3e2b22; 
+        border-top: 3px solid #C5A059; 
+        border-radius: 50%; 
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+
+      #loader-text {
+        font-family: 'Courier New', serif; 
+        color: #C5A059; 
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      #boot-log {
+        position: fixed; bottom: 0; left: 0; width: 100%; height: 150px;
+        background: rgba(0, 0, 0, 0.9); color: #00ff00;
+        font-family: monospace; font-size: 10px;
+        padding: 10px; overflow-y: auto; z-index: 10000;
+        border-top: 1px solid #333; pointer-events: none;
+        display: none; 
+      }
+      
+      .log-entry { margin-bottom: 2px; border-bottom: 1px solid #111; word-break: break-all; }
+      .log-error { color: #ff3333; }
+
+      /* ESSENTIAL CSS */
       .preserve-3d { transform-style: preserve-3d; }
-      .backface-hidden { backface-visibility: hidden; }
+      .perspective-container { perspective: 1200px; overflow: hidden; }
+      .font-calligraphy { font-family: 'Ma Shan Zheng', cursive; }
+      .font-serif { font-family: 'Noto Serif SC', serif; }
       .tategaki { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 0.1em; }
-      .world-3d { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
-      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      @keyframes sway-slow { 0%, 100% { transform: translateX(0) translateY(0); } 50% { transform: translateX(20px) translateY(10px); } }
+      .animate-sway-slow { animation: sway-slow 15s ease-in-out infinite; }
+      @keyframes pulse-slow-opacity { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+      .animate-pulse-slow-opacity { animation: pulse-slow-opacity 3s ease-in-out infinite; }
+      @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+      .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+      @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-fade-in-up { animation: fade-in-up 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+      
+      .custom-scrollbar::-webkit-scrollbar { width: 6px; }
       .custom-scrollbar::-webkit-scrollbar-track { background: #0f0a08; }
-      .custom-scrollbar::-webkit-scrollbar-thumb { background: #5c4025; border-radius: 2px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #3e2b22; border-radius: 3px; }
     </style>
+
+    <!-- LOGGER INIT & FAILSAFE -->
+    <script>
+      window.logToScreen = function(msg, type = 'info') {
+        const log = document.getElementById('boot-log');
+        if (log && type === 'error') {
+          log.style.display = 'block';
+          const div = document.createElement('div');
+          div.className = 'log-entry ' + (type === 'error' ? 'log-error' : '');
+          div.textContent = `[${new Date().toISOString().substr(11,8)}] ${msg}`;
+          log.appendChild(div);
+        }
+        console[type === 'error' ? 'error' : 'log'](msg);
+      };
+      
+      window.onerror = function(msg, url, line) {
+        window.logToScreen(`Global Error: ${msg} @ ${line}`, 'error');
+        return false; 
+      };
+
+      // Watchdog: If app doesn't take over in 8 seconds, offer reload
+      window.bootTimeout = setTimeout(() => {
+          const text = document.getElementById('loader-text');
+          const spin = document.getElementById('loader-spinner');
+          if (text) {
+              text.innerText = "INITIALIZATION TIMEOUT. TAP TO RETRY.";
+              text.style.color = "#ff6b6b";
+              text.style.cursor = "pointer";
+              text.onclick = () => window.location.reload();
+          }
+          if (spin) spin.style.borderColor = "#ff0000";
+      }, 8000);
+    </script>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
+        "react": "https://esm.sh/react@18.2.0?dev",
+        "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime?dev",
+        "react/": "https://esm.sh/react@18.2.0/?dev",
+        "react-dom": "https://esm.sh/react-dom@18.2.0?deps=react@18.2.0&dev",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0&dev",
+        "react-dom/": "https://esm.sh/react-dom@18.2.0/?deps=react@18.2.0&dev"
+      }
+    }
+    </script>
+
+    <script>
+      window.process = window.process || {};
+      window.process.env = window.process.env || {};
+      window.process.env.NODE_ENV = 'production';
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- STANDARD ENTRY POINT -->
+    <script type="module" src="index.tsx"></script>
   </head>
   <body>
+    <div id="app-loader">
+        <div id="loader-spinner"></div>
+        <div id="loader-text">INITIALIZING ENGINE...</div>
+    </div>
+
+    <div id="boot-log"></div>
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
   </body>
 </html>

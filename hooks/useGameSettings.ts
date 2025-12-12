@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Difficulty, SupportedLanguage } from '../types';
 
 export interface GameSettings {
@@ -17,6 +17,11 @@ export interface GameSettings {
     setShowSuitHistory: (show: boolean) => void;
     graphicsQuality: 'HIGH' | 'LOW';
     setGraphicsQuality: (quality: 'HIGH' | 'LOW') => void;
+    githubAutoSync: boolean;
+    setGithubAutoSync: (auto: boolean) => void;
+    showPaperDolls: boolean;
+    setShowPaperDolls: (show: boolean) => void;
+    isMobileDevice: boolean; // Exposed for UI to hide controls
 }
 
 export const useGameSettings = (): GameSettings => {
@@ -24,14 +29,37 @@ export const useGameSettings = (): GameSettings => {
     const [language, setLanguage] = useState<SupportedLanguage>('zh_CN');
     const [difficulty, setDifficulty] = useState<Difficulty>(Difficulty.MEDIUM);
     const [oneClickPlay, setOneClickPlay] = useState<boolean>(true);
-    const [isMuted, setIsMuted] = useState<boolean>(true); // Default Muted for better UX on load
+    const [isMuted, setIsMuted] = useState<boolean>(true); 
     const [isRiskAlertOn, setIsRiskAlertOn] = useState<boolean>(true);
     const [showSuitHistory, setShowSuitHistory] = useState<boolean>(true);
+    const [githubAutoSync, setGithubAutoSync] = useState<boolean>(true); 
     
-    // Auto-detect mobile to set LOW quality by default for performance
-    const [graphicsQuality, setGraphicsQuality] = useState<'HIGH' | 'LOW'>(
-        typeof window !== 'undefined' && window.innerWidth < 768 ? 'LOW' : 'HIGH'
-    );
+    // Robust Mobile Detection
+    const [isMobileDevice, setIsMobileDevice] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            // Check both width and user agent for robustness
+            const isMobileWidth = window.innerWidth < 1024;
+            const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            setIsMobileDevice(isMobileWidth || isMobileUA);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    const [graphicsQuality, setGraphicsQuality] = useState<'HIGH' | 'LOW'>('HIGH');
+    
+    // Internal state for Paper Dolls (for desktop users)
+    const [internalShowPaperDolls, setInternalShowPaperDolls] = useState<boolean>(true);
+
+    // Effect to enforce LOW quality on mobile automatically
+    useEffect(() => {
+        if (isMobileDevice) {
+            setGraphicsQuality('LOW');
+        }
+    }, [isMobileDevice]);
 
     return {
         language, setLanguage,
@@ -40,6 +68,12 @@ export const useGameSettings = (): GameSettings => {
         isMuted, setIsMuted,
         isRiskAlertOn, setIsRiskAlertOn,
         showSuitHistory, setShowSuitHistory,
-        graphicsQuality, setGraphicsQuality
+        graphicsQuality, setGraphicsQuality,
+        githubAutoSync, setGithubAutoSync,
+        
+        // HARD OVERRIDE: If mobile, ALWAYS false. User preference is ignored.
+        showPaperDolls: isMobileDevice ? false : internalShowPaperDolls,
+        setShowPaperDolls: setInternalShowPaperDolls,
+        isMobileDevice
     };
 };

@@ -4,29 +4,28 @@ import { ISkin, CardStyleProps } from '../types/skin';
 import { LeadingEffectType, Suit, CardColor } from '../types';
 import { TableBorderFlow } from '../components/Visuals/TableEffects';
 
+// Suspended Gold Dust
+const GOLD_DUST_PATTERN = "radial-gradient(circle, rgba(255,215,0,0.3) 1px, transparent 1px)"; 
+
 const ImperialAtmosphere: React.FC<{ quality?: 'HIGH' | 'LOW' }> = ({ quality }) => (
     <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden bg-[#020101]">
-         {/* Deep Lacquer Base */}
-         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,#1a0505_0%,#000000_100%)] opacity-100"></div>
-         
-         {/* Gold Dust */}
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,#150505_0%,#000000_100%)]"></div>
          {quality !== 'LOW' && (
-             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 mix-blend-color-dodge animate-sway-slow" style={{ backgroundSize: '400px' }}></div>
+             <div className="absolute inset-0 opacity-20 animate-sway-slow mix-blend-screen" style={{ backgroundImage: GOLD_DUST_PATTERN, backgroundSize: '150px 150px' }}></div>
          )}
-         
-         <div className="absolute top-[-20%] left-[50%] w-[40%] h-[120%] bg-gradient-to-b from-[#ffd700] to-transparent opacity-[0.03] transform -translate-x-1/2 rotate-12 blur-3xl pointer-events-none"></div>
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_30%,rgba(0,0,0,0.9)_100%)]"></div>
     </div>
 );
 
 const ImperialCardBack: React.FC<{ isSmall?: boolean }> = ({ isSmall }) => (
-    <div className="absolute inset-0 w-full h-full rounded-[inherit] overflow-hidden bg-[#0a0505] shadow-inner border border-[#3d1010]">
-         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')] opacity-40 mix-blend-overlay scale-75"></div>
-         <div className="absolute inset-0 opacity-50 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-screen"></div>
-         <div className="absolute inset-1.5 border border-[#C5A059] rounded-[4px] opacity-80 shadow-[0_0_10px_rgba(197,160,89,0.3)]"></div>
+    <div className="absolute inset-0 w-full h-full rounded-[inherit] overflow-hidden bg-[#050202] shadow-inner border border-[#333]">
+         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: GOLD_DUST_PATTERN, backgroundSize: '30px 30px' }}></div>
+         <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-black/95"></div>
+         <div className="absolute inset-1 border border-[#b8860b] rounded-[4px] opacity-40"></div>
          {!isSmall && (
              <div className="absolute inset-0 flex items-center justify-center">
-                 <div className="w-10 h-10 rounded-full border border-[#C5A059] flex items-center justify-center bg-black/60 backdrop-blur-sm shadow-[0_0_15px_#C5A059]">
-                    <span className="text-[#C5A059] font-serif font-bold text-xl drop-shadow-[0_0_5px_#C5A059]">御</span>
+                 <div className="w-8 h-12 border border-[#b8860b] flex items-center justify-center bg-black/60 backdrop-blur-sm shadow-[0_0_15px_#b8860b] animate-pulse-slow">
+                    <span className="text-[#b8860b] font-serif font-bold text-lg drop-shadow-[0_0_5px_#b8860b] writing-vertical-rl">御</span>
                  </div>
              </div>
          )}
@@ -36,115 +35,109 @@ const ImperialCardBack: React.FC<{ isSmall?: boolean }> = ({ isSmall }) => (
 const ImperialEffectOverlay: React.FC<{ effect: LeadingEffectType }> = ({ effect }) => {
     if (!effect) return null;
     return (
-        <div className="absolute inset-0 z-30 rounded-[inherit] pointer-events-none overflow-hidden mix-blend-overlay">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.5)_0%,transparent_70%)] animate-pulse-slow"></div>
-            <div className="absolute inset-0 border-2 border-[#ffd700] opacity-50 rounded-[inherit]"></div>
+        <div className="absolute inset-0 z-30 rounded-[inherit] pointer-events-none overflow-hidden mix-blend-plus-lighter">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.2)_0%,transparent_70%)] animate-pulse-slow"></div>
+            <div className="absolute inset-[-1px] border-[1.5px] border-[#ffd700] opacity-90 rounded-[inherit] shadow-[0_0_15px_#ffd700]"></div>
         </div>
     );
 };
 
-// ... Characters (Simplified) ...
-const BodyFront: React.FC = () => <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl"><path d="M35,25 Q50,20 65,25 L75,40 Q85,60 85,100 L15,100 Q15,60 25,40 Z" fill="#5c0b00" /></svg>;
-const BodySide: React.FC = () => <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl"><path d="M35,20 Q25,30 20,100 L90,100 Q85,60 65,30 Z" fill="#2a0500" /></svg>;
-const Chair: React.FC = () => <svg viewBox="0 0 100 100" className="w-full h-full"><path d="M10,100 L5,20 Q50,0 95,20 L90,100" fill="#1a0502" /></svg>;
+// ... Characters ...
+const BodyFront: React.FC = () => <div className="w-full h-full bg-[#0a0505] opacity-60 blur-xl rounded-full"></div>; 
+const ChairStub: React.FC = () => <div className="w-full h-full border-b-4 border-[#3e1010] opacity-50"></div>;
 
 export const ImperialSkin: ISkin = {
     id: 'imperial',
-    name: 'Imperial Court (Maki-e)',
-    description: 'Black lacquer (Urushi), gold dust, and deep shadows.',
+    name: 'Imperial Court (Lacquer)',
+    description: 'Deep Urushi lacquer with suspended gold dust (Maki-e).',
 
     layout: {
-        backgroundClass: "bg-[#050202]",
+        backgroundClass: "bg-[#020101]",
         atmosphereComponent: ImperialAtmosphere,
-        tableSurfaceClass: "bg-[#0a0505] border-[2px] border-[#5c1010] rounded-[24px] shadow-[0_50px_150px_black]",
-        tableSurfaceStyle: {
-            backgroundImage: `radial-gradient(circle at 50% 40%, rgba(255,255,255,0.05) 0%, transparent 60%), url('https://www.transparenttextures.com/patterns/black-scales.png'), linear-gradient(180deg, #150505 0%, #000000 100%)`,
-            backgroundBlendMode: 'normal, overlay, normal',
-            boxShadow: 'inset 0 0 120px rgba(0,0,0,1), 0 0 60px rgba(0,0,0,0.8)'
-        },
-        tableBorderClass: "bg-[#2b0a0a] border-t border-[#8c2020]/30 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]"
+        
+        tableSurfaceClass: "rounded-[32px] shadow-[0_40px_100px_black] border border-[#3e1010]/60 overflow-hidden",
+        
+        // 1. SOLID BASE (Deepest Black)
+        tableBaseColor: '#050202',
+        
+        // 2. TEXTURE (Gold Dust & Lacquer Depth)
+        tableTexture: `
+            radial-gradient(circle at 60% 30%, rgba(255,255,255,0.03) 0%, transparent 30%),
+            radial-gradient(circle at 40% 70%, rgba(184, 134, 11, 0.05) 0%, transparent 50%),
+            url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")
+        `,
+        tableTextureSize: 'auto',
+        tableReflectivity: true, // Enable Mirror Finish
+
+        tableBorderClass: "bg-[#0f0505] border-t border-[#3e1010]/40"
     },
 
     card: {
         getContainerClass: (props: CardStyleProps) => {
             let sizeClass = 'w-16 h-24 md:w-20 md:h-32';
-            if (props.isSmall) sizeClass = props.isRotated ? 'w-14 h-10' : 'w-10 h-14';
-            else if (props.isTrick) sizeClass = props.isRotated ? 'w-20 h-12 md:w-28 md:h-20' : 'w-12 h-20 md:w-20 md:h-28';
-            else if (props.isHand) sizeClass = props.isRotated ? 'w-20 h-12 md:w-24 md:h-16' : 'w-14 h-24 md:w-20 md:h-32'; 
-
-            // INVERTED = DEEP BLACK
-            let bgClass = props.isInverted ? 'bg-[#0a0a0a]' : 'bg-[#f7f2e6]'; 
-            if (props.isFaceDown) bgClass = 'bg-[#0a0505]';
-            if (props.isDisabled) bgClass = 'bg-stone-800 grayscale opacity-40';
-            
-            let hoverClass = 'transition-transform duration-300 cubic-bezier(0.34, 1.56, 0.64, 1)'; 
-            if (!props.isFaceDown && !props.isHand && !props.isDisabled) {
-                hoverClass += ' hover:-translate-y-3 hover:shadow-2xl cursor-pointer hover:brightness-110';
-            }
-
-            let transformClass = '';
-            if (props.isSelected) transformClass = '-translate-y-6 scale-110 z-[100] shadow-[0_20px_60px_rgba(0,0,0,0.9)] ring-1 ring-[#c5a059]';
-
-            return `relative flex flex-col group rounded-md ${sizeClass} ${bgClass} ${hoverClass} ${transformClass}`;
+            if (props.isSmall) sizeClass = props.isRotated ? 'w-12 h-8' : 'w-8 h-12';
+            else if (props.isTrick) sizeClass = props.isRotated ? 'w-20 h-14 md:w-28 md:h-20' : 'w-14 h-20 md:w-20 md:h-28';
+            else if (props.isHand) sizeClass = props.isRotated ? 'w-24 h-16 md:w-28 md:h-20' : 'w-16 h-24 md:w-24 md:h-36'; 
+            let bgClass = props.isInverted ? 'bg-[#080404] text-[#e6c278] border border-[#3e1010]' : 'bg-[#f7f2e6] text-[#1c1917]'; 
+            if (props.isFaceDown) bgClass = 'bg-[#050202]';
+            if (props.isDisabled) bgClass = 'bg-[#1a1a1a] grayscale opacity-40';
+            let hoverClass = 'transition-all duration-300 cubic-bezier(0.2, 0.8, 0.2, 1)'; 
+            if (!props.isFaceDown && !props.isHand && !props.isDisabled) { hoverClass += ' hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(0,0,0,0.8)] cursor-pointer hover:brightness-110'; }
+            let transformClass = ''; if (props.isSelected) transformClass = '-translate-y-4 scale-105 z-[100] shadow-[0_0_30px_rgba(218,165,32,0.6)] ring-1 ring-[#daa520]';
+            return `relative flex flex-col group rounded-[6px] ${sizeClass} ${bgClass} ${hoverClass} ${transformClass}`;
         },
-
         getMainColorClass: (color, isInverted) => {
-            if (isInverted) return 'text-[#e6c278] font-serif tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]'; // Antique Gold
-            if (color === CardColor.RED) return 'text-[#8a1c1c] drop-shadow-sm font-bold opacity-90';
-            if (color === CardColor.GREEN) return 'text-[#14532d] drop-shadow-sm font-bold opacity-90';
-            return 'text-[#1c1917] font-bold opacity-90'; 
+            if (isInverted) return 'text-[#d4af37] font-serif tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]'; 
+            if (color === CardColor.RED) return 'text-[#9f1212] font-bold opacity-90 mix-blend-multiply'; 
+            if (color === CardColor.GREEN) return 'text-[#0f5132] font-bold opacity-90 mix-blend-multiply'; 
+            return 'text-[#0a0a0a] font-bold opacity-90 mix-blend-multiply'; 
         },
-
         getPokerColorClass: (suit, isInverted) => {
             if (isInverted) return 'text-[#b8860b]';
             const isRedSuit = suit === Suit.STRINGS || suit === Suit.TEXTS;
-            return isRedSuit ? 'text-[#8a1c1c]' : 'text-[#1c1917]';
+            return isRedSuit ? 'text-[#9f1212]' : 'text-[#0a0a0a]';
         },
-
         getBorderClass: (props: CardStyleProps) => {
-            if (props.isFaceDown) return 'border border-[#3d1010]';
-            if (props.isWinner) return 'border border-[#d4af37] shadow-[0_0_15px_#d4af37]';
-            if (props.isSelected) return 'border-none'; 
-            return 'border border-[#e6dccf]'; 
+            if (props.isFaceDown) return 'border border-[#3e1010]';
+            if (props.isWinner) return 'border border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.6)]';
+            return 'border-[0.5px] border-[#ccc]/30'; 
         },
-
         getShadowClass: (props: CardStyleProps) => {
-            if (props.isFaceDown) return 'shadow-[0_10px_25px_black]'; 
-            return 'shadow-[0_5px_15px_rgba(0,0,0,0.3)]'; 
+            if (props.isFaceDown) return 'shadow-[0_10px_20px_black]'; 
+            return 'shadow-[0_2px_8px_rgba(0,0,0,0.3)]'; 
         },
-
         BackComponent: ImperialCardBack,
         EffectOverlay: ImperialEffectOverlay
     },
 
     hud: {
         avatarContainerClass: (isMyTurn) => `
-            relative w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center 
+            relative w-16 h-16 md:w-24 md:h-24 rounded-full flex items-center justify-center 
             transition-all duration-700
             ${isMyTurn 
-                ? 'bg-gradient-to-b from-[#3d0e0e] to-[#000] border-2 border-[#FFD700] shadow-[0_0_50px_rgba(255,215,0,0.6)] scale-110 z-50' 
-                : 'bg-[#0f0505] border border-[#3e2b22] opacity-80 grayscale-[0.3]'}
+                ? 'bg-[#150505] border-2 border-[#FFD700] shadow-[0_0_50px_rgba(255,215,0,0.5)] scale-110 z-50 ring-1 ring-[#b8860b]' 
+                : 'bg-[#0a0202] border border-[#3e1010] opacity-70 grayscale-[0.5] scale-90'}
         `,
         buttonClass: (disabled) => `
-            relative min-w-[160px] h-14 rounded-sm flex items-center justify-center transition-all duration-300 font-serif tracking-[0.3em] font-bold text-sm shadow-[0_10px_30px_rgba(0,0,0,0.8)]
+            relative min-w-[140px] h-12 rounded-[4px] flex items-center justify-center transition-all duration-300 font-serif tracking-[0.3em] font-bold text-sm shadow-[0_10px_30px_rgba(0,0,0,0.9)]
             ${!disabled 
-                ? 'bg-gradient-to-b from-[#2b180d] via-[#3d2213] to-[#1a0f0a] text-[#e6c278] border-y border-[#8c6239] hover:brightness-125 hover:-translate-y-1 active:scale-95' 
-                : 'bg-[#1a1a1a] text-[#555] border border-[#333] cursor-not-allowed'}
+                ? 'bg-gradient-to-br from-[#2b0d0d] via-[#4a1212] to-[#1a0505] text-[#ffdb7a] border border-[#d4af37] hover:brightness-125 hover:-translate-y-1 active:scale-95 shadow-[0_0_20px_rgba(212,175,55,0.2)] backdrop-blur-md' 
+                : 'bg-[#0f0505] text-[#555] border border-[#333] cursor-not-allowed opacity-50'}
         `,
-        modalOverlayClass: "fixed inset-0 z-[300] flex items-center justify-center bg-[#050202]/98 backdrop-blur-xl p-4 animate-fade-in font-serif",
-        modalContentClass: `relative w-full max-w-5xl bg-[#0a0606] border-y border-[#5c1010] shadow-[0_0_150px_black] text-[#e6c278] rounded-sm bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')]`
+        modalOverlayClass: "fixed inset-0 z-[300] flex items-center justify-center bg-[#000000]/98 backdrop-blur-xl p-4 animate-fade-in font-serif",
+        modalContentClass: `relative w-full max-w-5xl bg-[#050202] border-[1px] border-[#3e1010] shadow-[0_0_150px_rgba(139,0,0,0.5)] text-[#e6c278] rounded-[4px]`
     },
 
     lighting: {
-        StoveLighting: () => null,
+        StoveLighting: () => null, 
         TableBorderFlow: TableBorderFlow
     },
 
     character: {
         bodyFront: BodyFront,
-        bodySideLeft: BodySide,
-        bodySideRight: BodySide,
+        bodySideLeft: BodyFront,
+        bodySideRight: BodyFront,
         headOutline: '',
-        chairComponent: Chair
+        chairComponent: ChairStub
     }
 };

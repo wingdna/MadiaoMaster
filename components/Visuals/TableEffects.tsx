@@ -2,80 +2,79 @@
 import React, { useMemo } from 'react';
 import { GamePhase } from '../../types';
 
-// STOVE LIGHTING (Ambient atmospheric glow)
+// =============================================================================
+// STOVE LIGHTING (Ambient)
+// =============================================================================
 export const StoveLighting = React.memo(({ activePlayerId, spotlightPos }: { activePlayerId: number, spotlightPos?: {x: string, y: string} | null }) => {
-    const styles: React.CSSProperties = useMemo(() => {
+    const styles = useMemo(() => {
         if (spotlightPos) {
             return {
                 background: `radial-gradient(circle at ${spotlightPos.x} ${spotlightPos.y}, 
-                    rgba(255, 215, 0, 0.4) 0%, 
-                    rgba(184, 134, 11, 0.1) 30%, 
-                    rgba(0, 0, 0, 0.9) 70%)`,
-                transition: 'background 0.6s cubic-bezier(0.25, 1, 0.5, 1)',
-                mixBlendMode: 'screen' 
+                    rgba(255, 215, 0, 0.2) 0%, 
+                    rgba(184, 134, 11, 0.05) 40%, 
+                    transparent 70%)`,
+                transition: 'background 0.8s cubic-bezier(0.25, 1, 0.5, 1)',
+                mixBlendMode: 'plus-lighter' as any
             };
         }
         return { background: 'transparent' }; 
     }, [spotlightPos]);
 
     return (
-        <div className="absolute inset-0 z-[5] pointer-events-none" style={styles}></div>
+        <div className="absolute inset-0 z-[5] pointer-events-none transition-all duration-1000" style={styles}></div>
     );
 });
 
 // =============================================================================
-// COMPASS GEOMETRY (WIDER STADIUM SHAPE)
+// COMPASS & TABLE FLOW
 // =============================================================================
-// Width: -200 to 600 (800 units), Height: -50 to 350 (400 units). Ratio 2:1
-const VIEWBOX_STR = "-250 -100 900 550"; 
 
-const PATH_FULL_SHAPE = "M -100 0 L 500 0 A 175 175 0 0 1 500 350 L -100 350 A 175 175 0 0 1 -100 0 Z";
+// V44: Widened Compass Shape (Height 350 -> 440). Increased ViewBox Height (550 -> 640).
+// Center aligned at Y=220 (Previously 175) to maintain wrapping.
+const VIEWBOX_STR = "-250 -100 900 640"; 
+const PATH_FULL_SHAPE = "M -100 0 L 500 0 A 220 220 0 0 1 500 440 L -100 440 A 220 220 0 0 1 -100 0 Z";
 
-// Sectors for lighting logic
-const PATH_NORTH = "M -100 0 L 500 0"; // Top Edge
-const PATH_SOUTH = "M 500 350 L -100 350"; // Bottom Edge
-const PATH_EAST = "M 500 0 A 175 175 0 0 1 500 350"; // Right Curve
-const PATH_WEST = "M -100 350 A 175 175 0 0 1 -100 0"; // Left Curve
-
-// Crosshair
-const PATH_CROSS_V = "M 200 0 L 200 350";
-const PATH_CROSS_H = "M -100 175 L 500 175";
+const PATH_NORTH = "M -100 0 L 500 0"; 
+const PATH_SOUTH = "M 500 440 L -100 440"; 
+const PATH_EAST = "M 500 0 A 220 220 0 0 1 500 440"; 
+const PATH_WEST = "M -100 440 A 220 220 0 0 1 -100 0"; 
 
 export const TableBorderFlow = React.memo(({ activePlayerId, isVertical = false }: { activePlayerId: number, isVertical?: boolean }) => {
     return (
-        <div className="absolute inset-0 pointer-events-none z-[12] overflow-visible" style={{ transform: isVertical ? 'rotate(90deg)' : 'none', transition: 'transform 0.5s ease-out' }}>
+        <div className="absolute inset-0 pointer-events-none z-[12] overflow-visible mix-blend-screen" style={{ transform: isVertical ? 'rotate(90deg)' : 'none', transition: 'transform 0.5s ease-out' }}>
             <svg className="w-full h-full overflow-visible" viewBox={VIEWBOX_STR} preserveAspectRatio="xMidYMid meet">
                 <defs>
-                    <filter id="gold-glow-flow">
-                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                        <feMerge>
-                            <feMergeNode in="coloredBlur"/>
-                            <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
+                    <filter id="soft-gold-glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="4" result="blur"/>
+                        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
                     </filter>
-                    <linearGradient id="flowGrad" gradientUnits="userSpaceOnUse" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#B8860B" stopOpacity="0" />
-                        <stop offset="50%" stopColor="#FFD700" stopOpacity="0.8" />
-                        <stop offset="100%" stopColor="#B8860B" stopOpacity="0" />
+                    
+                    {/* Classic Gold Tea Gradient */}
+                    <linearGradient id="teaFlowGrad" gradientUnits="userSpaceOnUse" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#8c6239" stopOpacity="0" />
+                        <stop offset="30%" stopColor="#d4af37" stopOpacity="0.6" />
+                        <stop offset="50%" stopColor="#ffecb3" stopOpacity="1" />
+                        <stop offset="70%" stopColor="#d4af37" stopOpacity="0.6" />
+                        <stop offset="100%" stopColor="#8c6239" stopOpacity="0" />
                     </linearGradient>
                 </defs>
                 <style>
                     {`
-                        @keyframes stadiumFlow {
-                            0% { stroke-dashoffset: 3000; } 
+                        @keyframes borderFlow {
+                            0% { stroke-dashoffset: 2000; } 
                             100% { stroke-dashoffset: 0; }
                         }
                     `}
                 </style>
                 <path 
                     d={PATH_FULL_SHAPE} 
-                    stroke="url(#flowGrad)" 
-                    strokeWidth="3" 
+                    stroke="url(#teaFlowGrad)" 
+                    strokeWidth="2" 
                     fill="none" 
                     strokeLinecap="round" 
-                    filter="url(#gold-glow-flow)" 
-                    strokeDasharray="400 1600" 
-                    style={{ animation: 'stadiumFlow 6s linear infinite' }}
+                    filter="url(#soft-gold-glow)" 
+                    strokeDasharray="300 1700" 
+                    style={{ animation: 'borderFlow 4s linear infinite' }}
                 />
             </svg>
         </div>
@@ -102,7 +101,7 @@ export const Compass = React.memo(({
     isVertical?: boolean
 }) => {
     
-    // Rotation mapping: 0=S(180), 1=E(90), 2=N(0), 3=W(-90)
+    // Smooth Rotation
     const rotation = useMemo(() => {
         let deg = 0;
         switch(activePlayerId) {
@@ -114,110 +113,157 @@ export const Compass = React.memo(({
         return deg;
     }, [activePlayerId]);
 
-    // Sector Mapping for Highlight
-    const sectorMapping: Record<number, number> = useMemo(() => {
-        if (isVertical) {
-            return { 2: 3, 0: 1, 1: 2, 3: 0 }; // Adjusted for 90deg rotation visually
-        }
+    const sectorMapping = useMemo(() => {
+        if (isVertical) return { 2: 3, 0: 1, 1: 2, 3: 0 }; 
         return { 0:0, 1:1, 2:2, 3:3 };
     }, [isVertical]);
 
-    // Needle Shadow logic
-    const { shadowX, shadowY } = useMemo(() => {
-        let lx = 0, ly = 0;
-        if (playedPlayerIds.includes(0)) ly += 1;
-        if (playedPlayerIds.includes(1)) lx += 1;
-        if (playedPlayerIds.includes(2)) ly -= 1;
-        if (playedPlayerIds.includes(3)) lx -= 1;
-        const mag = Math.sqrt(lx*lx + ly*ly);
-        if (mag === 0) return { shadowX: 0, shadowY: 2 };
-        const scale = 12;
-        return { shadowX: -(lx / mag) * scale, shadowY: -(ly / mag) * scale };
-    }, [playedPlayerIds]);
-
+    // Needle Logic
     const isDualRole = (pid: number) => pid === bankerId && pid === revealedBaiLaoId;
     const getPlayerColorValues = (pid: number) => {
-        if (isDualRole(pid)) return { main: '#ef4444', sub: '#14b8a6', isSplit: true }; 
-        if (pid === bankerId) return { main: '#b91c1c', sub: '#b91c1c', isSplit: false }; // Darker Red
-        if (pid === revealedBaiLaoId) return { main: '#0d9488', sub: '#0d9488', isSplit: false }; // Teal
-        return { main: '#d4af37', sub: '#d4af37', isSplit: false }; // Gold
+        if (isDualRole(pid)) return { main: '#ef4444', glow: '#ef4444' }; 
+        if (pid === bankerId) return { main: '#b91c1c', glow: '#ff0000' }; 
+        if (pid === revealedBaiLaoId) return { main: '#0d9488', glow: '#2dd4bf' }; 
+        return { main: '#d4af37', glow: '#ffeebb' }; 
     };
 
-    const activeColors = getPlayerColorValues(activePlayerId);
-    const needleBg = activeColors.isSplit
-        ? `linear-gradient(90deg, ${activeColors.main} 50%, ${activeColors.sub} 50%)`
-        : `linear-gradient(90deg, ${activeColors.main} 0%, #ffefdb 50%, ${activeColors.main} 100%)`;
+    const getIdentityLabel = (pid: number, defaultText: string) => {
+        if (pid === bankerId) return '庄';
+        if (pid === revealedBaiLaoId) return '百';
+        return defaultText;
+    };
 
-    // Marking Styles - ABSOLUTELY POSITIONED INSIDE THE SVG COORDINATE SPACE via HTML overlay
     const getTextClass = (pid: number) => {
         const isActive = activePlayerId === pid;
-        const base = "absolute font-serif font-bold transition-all duration-700 transform -translate-x-1/2 -translate-y-1/2 z-[25]";
-        if (isActive) return `${base} text-[#ffdb7a] text-2xl md:text-3xl drop-shadow-[0_0_8px_rgba(255,215,0,0.8)] scale-110`;
-        return `${base} text-[#3e2b22] text-xl opacity-40`;
+        const isTheBanker = pid === bankerId;
+        const isTheBaiLao = pid === revealedBaiLaoId;
+        
+        let colorClass = "text-[#5c4025] opacity-60 mix-blend-overlay"; // Default Bronze
+        let glowStyle = "";
+        let scaleClass = "scale-100";
+
+        // Identity Colors
+        if (isTheBanker) {
+            colorClass = "text-[#ef4444] opacity-90 drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]"; // Red
+            glowStyle = "animate-pulse-slow";
+        } else if (isTheBaiLao) {
+            colorClass = "text-[#34d399] opacity-90 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]"; // Green
+            glowStyle = "animate-pulse-slow";
+        }
+
+        // Active State Overrides
+        if (isActive) {
+            scaleClass = "scale-125 md:scale-150";
+            if (!isTheBanker && !isTheBaiLao) {
+                // Normal player active: Gold
+                colorClass = "text-[#ffdb7a] opacity-100 drop-shadow-[0_0_15px_rgba(255,215,0,0.8)]"; 
+            } else {
+                // Identity player active: Brighten Identity Color
+                colorClass = colorClass.replace("opacity-90", "opacity-100 brightness-150");
+                glowStyle = ""; // Disable pulse when active to avoid conflicting with scale animation if any
+            }
+        }
+
+        // V45 Update: Base text size increased to text-sm (was text-xs) for better mobile visibility
+        return `absolute font-serif font-bold transition-all duration-700 transform -translate-x-1/2 -translate-y-1/2 z-[25] flex items-center justify-center text-sm md:text-xl ${colorClass} ${scaleClass} ${glowStyle}`;
     };
+
+    // Glass Lid Animation Logic
+    const isKaiChong = phase === GamePhase.KAI_CHONG;
+    // When Kai Chong starts, glass slides open (Top goes Up, Bottom goes Down)
+    // We assume the Compass center is at Y=220.
+    const lidTranslateY = isKaiChong ? 300 : 0; 
 
     return (
         <div className="relative w-full h-full pointer-events-none z-[0]" style={{ transformStyle: 'preserve-3d' }}>
             
-            {/* 1. THE GLASS COMPASS BODY */}
+            {/* 1. GLASS LID (Split into Top/Bottom Halves for Opening Animation) */}
             <div className="absolute inset-0 z-[10]" style={{ transform: isVertical ? 'rotate(90deg) translateZ(0px)' : 'translateZ(0px)', transition: 'transform 0.5s ease-out' }}>
                 <svg className="w-full h-full overflow-visible" viewBox={VIEWBOX_STR} preserveAspectRatio="xMidYMid meet">
                     <defs>
-                        <linearGradient id="glassBody" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#0a0503" stopOpacity="0.4" />
-                            <stop offset="50%" stopColor="#1a0f0a" stopOpacity="0.6" />
-                            <stop offset="100%" stopColor="#0a0503" stopOpacity="0.4" />
+                        <linearGradient id="glassReflection" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="white" stopOpacity="0.05" />
+                            <stop offset="40%" stopColor="white" stopOpacity="0.0" />
+                            <stop offset="60%" stopColor="white" stopOpacity="0.0" />
+                            <stop offset="100%" stopColor="white" stopOpacity="0.1" />
                         </linearGradient>
-                        <filter id="insetShadow">
-                            <feComponentTransfer in="SourceAlpha"><feFuncA type="table" tableValues="1 0" /></feComponentTransfer>
-                            <feGaussianBlur stdDeviation="4"/>
-                            <feOffset dx="0" dy="2" result="offsetblur"/>
-                            <feFlood floodColor="rgb(0, 0, 0)" floodOpacity="1"/>
-                            <feComposite in2="offsetblur" operator="in"/>
-                            <feComposite in2="SourceAlpha" operator="in" />
-                            <feMerge><feMergeNode in="SourceGraphic" /><feMergeNode /></feMerge>
+                        <filter id="rimGlow">
+                            <feGaussianBlur stdDeviation="2" result="blur"/>
+                            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
                         </filter>
+                        
+                        {/* Split Clips for Lid Opening */}
+                        <clipPath id="clipTopHalf">
+                            <rect x="-250" y="-100" width="900" height="320" /> {/* Covers roughly top half to Y=220 */}
+                        </clipPath>
+                        <clipPath id="clipBottomHalf">
+                            <rect x="-250" y="220" width="900" height="420" /> {/* Covers bottom half from Y=220 */}
+                        </clipPath>
                     </defs>
 
-                    {/* Dark Glass Background */}
-                    <path d={PATH_FULL_SHAPE} fill="url(#glassBody)" stroke="none" />
+                    {/* Dark Background Plate (Always Static, The "Pit") */}
+                    <path d={PATH_FULL_SHAPE} fill="#050302" stroke="none" opacity="0.6" />
                     
-                    {/* Inner Etchings */}
-                    <g stroke="#3e2b22" strokeWidth="1" opacity="0.3" fill="none">
-                        <path d={PATH_CROSS_V} />
-                        <path d={PATH_CROSS_H} />
-                        <circle cx="200" cy="175" r="100" />
+                    {/* Inner Rim (Gold/Bronze) - Static */}
+                    <path d={PATH_FULL_SHAPE} fill="none" stroke="#3e2b22" strokeWidth="2" opacity="0.5" />
+
+                    {/* TOP GLASS LID */}
+                    <g style={{ transition: 'transform 1.5s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateY(-${lidTranslateY}px)` }} clipPath="url(#clipTopHalf)">
+                        <path d={PATH_FULL_SHAPE} fill="url(#glassReflection)" stroke="none" style={{ mixBlendMode: 'overlay' }} />
+                        {/* Top Rim Segment */}
+                        <path d="M -100 220 L 500 220" stroke="#5c4025" strokeWidth="1" opacity="0.5" /> 
                     </g>
 
-                    {/* Thick Rim */}
-                    <path d={PATH_FULL_SHAPE} fill="none" stroke="#2b180d" strokeWidth="8" filter="url(#insetShadow)" opacity="0.8"/>
-                    <path d={PATH_FULL_SHAPE} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="2" style={{mixBlendMode: 'overlay'}}/>
+                    {/* BOTTOM GLASS LID */}
+                    <g style={{ transition: 'transform 1.5s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateY(${lidTranslateY}px)` }} clipPath="url(#clipBottomHalf)">
+                        <path d={PATH_FULL_SHAPE} fill="url(#glassReflection)" stroke="none" style={{ mixBlendMode: 'overlay' }} />
+                        {/* Bottom Rim Segment */}
+                        <path d="M -100 220 L 500 220" stroke="#5c4025" strokeWidth="1" opacity="0.5" /> 
+                    </g>
 
-                    {/* Active Sector Highlights */}
-                    <g style={{ mixBlendMode: 'screen' }}>
+                    {/* Crosshairs & Grid (Static on base) */}
+                    <g style={{ mixBlendMode: 'plus-lighter', opacity: isKaiChong ? 0.3 : 1, transition: 'opacity 1s' }}>
+                        <line x1="-80" y1="220" x2="480" y2="220" stroke="#8c6239" strokeWidth="1.5" opacity="0.5" strokeDasharray="6 3" />
+                        <line x1="200" y1="20" x2="200" y2="420" stroke="#8c6239" strokeWidth="1.5" opacity="0.5" strokeDasharray="6 3" />
+                        <circle cx="200" cy="220" r="120" fill="none" stroke="#5c4025" strokeWidth="1" opacity="0.2" />
+                        <circle cx="200" cy="220" r="40" fill="none" stroke="#d4af37" strokeWidth="1" opacity="0.15" />
+                        <circle cx="200" cy="220" r="3" fill="#d4af37" opacity="0.8" />
+                    </g>
+
+                    {/* Sectors */}
+                    <g style={{ mixBlendMode: 'screen', opacity: isKaiChong ? 0.5 : 1, transition: 'opacity 1s' }}>
                         {[
-                            { id: 2, path: PATH_NORTH, orient: 'H' }, 
-                            { id: 1, path: PATH_EAST, orient: 'V' },  
-                            { id: 0, path: PATH_SOUTH, orient: 'H' }, 
-                            { id: 3, path: PATH_WEST, orient: 'V' }   
+                            { id: 2, path: PATH_NORTH }, 
+                            { id: 1, path: PATH_EAST },  
+                            { id: 0, path: PATH_SOUTH }, 
+                            { id: 3, path: PATH_WEST }   
                         ].map(sector => {
-                            // Find which player corresponds to this SVG sector
-                            // Inverse the map: find key where val = sector.id
-                            const pidStr = Object.keys(sectorMapping).find(k => sectorMapping[parseInt(k)] === sector.id);
+                            const pidStr = Object.keys(sectorMapping).find(k => (sectorMapping as any)[k] === sector.id);
                             const pid = pidStr ? parseInt(pidStr) : -1;
-                            const isLit = pid === activePlayerId || playedPlayerIds.includes(pid);
+                            const isActive = pid === activePlayerId;
+                            const isLit = isActive || playedPlayerIds.includes(pid);
+                            const colors = getPlayerColorValues(pid);
                             
                             return (
-                                <path 
-                                    key={sector.id}
-                                    d={sector.path}
-                                    fill="none"
-                                    stroke={isLit ? getPlayerColorValues(pid).main : 'transparent'}
-                                    strokeWidth={isLit ? 4 : 0} 
-                                    strokeLinecap="round"
-                                    filter="url(#gold-glow-flow)"
-                                    style={{ transition: 'stroke 0.3s ease-out' }}
-                                />
+                                <g key={sector.id}>
+                                    <path 
+                                        d={sector.path}
+                                        fill="none"
+                                        stroke={colors.main}
+                                        strokeWidth={isActive ? 6 : (isLit ? 2 : 0)}
+                                        strokeLinecap="round"
+                                        filter={isActive ? "url(#rimGlow)" : ""}
+                                        opacity={isLit ? 1 : 0}
+                                        style={{ transition: 'all 0.5s ease-out' }}
+                                    />
+                                    <path 
+                                        d={sector.path}
+                                        fill="none"
+                                        stroke="#2a1d15"
+                                        strokeWidth="1"
+                                        strokeLinecap="round"
+                                    />
+                                </g>
                             );
                         })}
                     </g>
@@ -228,53 +274,41 @@ export const Compass = React.memo(({
             <div className="absolute inset-0 z-[100] flex items-center justify-center pointer-events-none" 
                  style={{ 
                      transformStyle: 'preserve-3d', 
-                     transform: 'translateZ(20px)' 
+                     transform: 'translateZ(10px)' 
                  }}>
                  
-                 <div className="relative transition-transform duration-1000 ease-out-expo scale-[1.8]" 
-                      style={{ transform: `rotate(${rotation}deg) scale(1.8)` }}>
+                 <div className="relative transition-transform duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1)" 
+                      style={{ transform: `rotate(${rotation}deg)` }}>
                         
-                        {/* Shadow */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[12px] h-[60px] bg-black blur-[4px] transition-all duration-700"
+                        {/* Needle Shadow */}
+                        <div className="absolute top-1/2 left-1/2 w-4 h-32 bg-black blur-sm opacity-60"
                              style={{ 
-                                 transform: `translate(${shadowX}px, ${shadowY}px) scale(1.1) translateZ(-20px)`, 
-                                 clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-                                 opacity: 0.6
+                                 transform: `translate(-50%, -50%) rotate(0deg) translateZ(-10px)`, 
+                                 clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)'
                              }}>
                         </div>
 
                         {/* Needle Body */}
-                        <div className="relative -top-[25px]">
-                             {/* North Pole (Colored) */}
-                             <div className="w-[10px] h-[55px] mx-auto transition-colors duration-500"
-                                  style={{ 
-                                      clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)', 
-                                      background: needleBg,
-                                      boxShadow: 'inset 2px 0 3px rgba(255,255,255,0.3)',
-                                  }}>
-                             </div>
-                             {/* South Pole (White/Silver) */}
-                             <div className="w-[10px] h-[55px] mx-auto bg-gradient-to-b from-[#e0e0e0] to-[#999] rotate-180"
-                                  style={{ 
-                                      clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)', 
-                                      marginTop: '-1px'
-                                  }}>
-                             </div>
+                        <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-b-[90px] border-l-transparent border-r-transparent border-b-[#e6c278] relative filter drop-shadow-lg"
+                             style={{ transform: 'translateY(-30px)' }}>
+                             <div className="absolute left-[-1px] top-[10px] w-[2px] h-[70px] bg-white/40 blur-[1px]"></div>
                         </div>
-
-                        {/* Cap */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gradient-to-br from-[#d4af37] to-[#8c6239] shadow-md border border-[#3e2b22] z-50">
-                            <div className="w-1.5 h-1.5 bg-[#1a0f0a] rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-                        </div>
+                        
+                        {/* Center Cap */}
+                        <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-[20px] w-6 h-6 rounded-full bg-gradient-to-br from-[#fcd34d] to-[#78350f] shadow-lg border border-[#451a03] z-50"></div>
                  </div>
             </div>
 
-            {/* 3. MARKINGS */}
-            <div className="absolute inset-0 z-[25] pointer-events-none" style={{ transform: 'translateZ(10px)' }}>
-                 <div className={getTextClass(2)} style={{ top: '25%', left: '50%' }}>北</div>
-                 <div className={getTextClass(0)} style={{ top: '75%', left: '50%' }}>南</div>
-                 <div className={getTextClass(3)} style={{ top: '50%', left: '20%' }}>西</div>
-                 <div className={getTextClass(1)} style={{ top: '50%', left: '80%' }}>東</div>
+            {/* 3. DIRECTION LABELS (Fade out slightly during Kai Chong) */}
+            <div className="absolute inset-0 z-[25] pointer-events-none" style={{ transform: 'translateZ(15px)', opacity: isKaiChong ? 0.3 : 1, transition: 'opacity 1s' }}>
+                 {/* 
+                    Mapping: 2=Top(N), 0=Bottom(S), 3=Left(W), 1=Right(E)
+                    We replace direction text with Identity if applicable.
+                 */}
+                 <div className={getTextClass(2)} style={{ top: '25%', left: '50%' }}>{getIdentityLabel(2, '北')}</div>
+                 <div className={getTextClass(0)} style={{ top: '75%', left: '50%' }}>{getIdentityLabel(0, '南')}</div>
+                 <div className={getTextClass(3)} style={{ top: '50%', left: '32%' }}>{getIdentityLabel(3, '西')}</div>
+                 <div className={getTextClass(1)} style={{ top: '50%', left: '68%' }}>{getIdentityLabel(1, '東')}</div>
             </div>
         </div>
     );

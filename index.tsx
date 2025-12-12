@@ -1,54 +1,123 @@
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import React, { ErrorInfo, ReactNode } from 'react';
+import { createRoot } from 'react-dom/client';
 import { App } from './App';
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+// Helper to access the global logger safely
+const safeLog = (msg: string, type: 'info' | 'error' = 'info') => {
+    const w = window as any;
+    if (w.logToScreen) w.logToScreen(msg, type);
+    else console[type](msg);
+};
+
+safeLog("index.tsx: Imports resolved. Starting mount sequence...");
+
+interface ErrorBoundaryProps {
+    children?: ReactNode;
 }
 
-// Fallback Error Component
-const ErrorFallback = ({ error }: { error: Error }) => (
-  <div style={{
-    padding: '20px', 
-    color: '#ff6b6b', 
-    backgroundColor: '#1a0505', 
-    height: '100vh', 
-    display: 'flex', 
-    flexDirection: 'column', 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    fontFamily: 'monospace'
-  }}>
-    <h2 style={{ fontSize: '24px', marginBottom: '20px' }}>Application Error</h2>
-    <p style={{ marginBottom: '10px' }}>The game failed to start. Please check the console.</p>
-    <pre style={{ 
-      backgroundColor: '#000', 
-      padding: '15px', 
-      borderRadius: '5px', 
-      maxWidth: '90%', 
-      overflow: 'auto' 
-    }}>
-      {error.message}
-    </pre>
-  </div>
-);
+interface ErrorBoundaryState {
+    hasError: boolean;
+    error: Error | null;
+}
 
-try {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
-} catch (e) {
-  console.error("CRITICAL RENDER ERROR:", e);
-  // Manual fallback if React fails completely
-  rootElement.innerHTML = `
-    <div style="color:red; padding:20px; font-family:sans-serif;">
-      <h1>Critical Startup Error</h1>
-      <p>${e instanceof Error ? e.message : String(e)}</p>
-    </div>
-  `;
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    public state: ErrorBoundaryState = { hasError: false, error: null };
+    // Explicitly declare props to fix TS error in some environments
+    public readonly props: Readonly<ErrorBoundaryProps>;
+
+    constructor(props: ErrorBoundaryProps) {
+        super(props);
+        this.props = props;
+    }
+
+    static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+        safeLog("React Boundary Caught: " + error.message, 'error');
+        console.error(errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div style={{ 
+                    padding: '40px', 
+                    color: '#ff6b6b', 
+                    fontFamily: 'monospace', 
+                    background: '#1a0505', 
+                    height: '100vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <h1 style={{ fontSize: '24px', marginBottom: '20px' }}>Application Error</h1>
+                    <pre style={{ background: 'rgba(0,0,0,0.3)', padding: '20px', borderRadius: '4px' }}>
+                        {this.state.error?.message}
+                    </pre>
+                    <button 
+                        onClick={() => window.location.reload()} 
+                        style={{ 
+                            marginTop: '20px', 
+                            padding: '10px 20px', 
+                            background: '#8c1c0b', 
+                            color: 'white', 
+                            border: '1px solid #ff6b6b', 
+                            cursor: 'pointer' 
+                        }}
+                    >
+                        Reload
+                    </button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+const mount = () => {
+    safeLog("Mounting React Root...");
+    const rootEl = document.getElementById('root');
+    
+    if (!rootEl) {
+        safeLog("FATAL: #root element not found!", 'error');
+        return;
+    }
+
+    try {
+        const root = createRoot(rootEl);
+        root.render(
+            <ErrorBoundary>
+                <App />
+            </ErrorBoundary>
+        );
+        safeLog("Render command dispatched.");
+
+        // CLEAR WATCHDOG
+        const w = window as any;
+        if (w.bootTimeout) clearTimeout(w.bootTimeout);
+
+        // Cleanup loader
+        setTimeout(() => {
+            const loader = document.getElementById('app-loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    if (loader.parentNode) loader.parentNode.removeChild(loader);
+                }, 500);
+            }
+        }, 800);
+
+    } catch (e: any) {
+        safeLog("Mount Exception: " + (e.message || String(e)), 'error');
+    }
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mount);
+} else {
+    mount();
 }

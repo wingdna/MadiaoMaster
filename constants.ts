@@ -390,7 +390,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     kc_seq: '顺领冲',
     kc_gap: '间领冲',
 
-    tab_summary: '结算总表',
+    tab_summary: '结算',
     tab_kai_zhu: '开注 / 敲门',
     tab_se_yang: '色样',
     tab_kai_chong: '开冲明细',
@@ -540,7 +540,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     kc_seq: '順領衝',
     kc_gap: '間領衝',
 
-    tab_summary: '結算總表',
+    tab_summary: '結算',
     tab_kai_zhu: '開註 / 敲門',
     tab_se_yang: '色樣',
     tab_kai_chong: '開衝明細',

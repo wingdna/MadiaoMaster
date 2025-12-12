@@ -1,7 +1,8 @@
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import CardComponent from '../Card';
 import { Player, Card, PlayerType } from '../../types';
+import { useSkin } from '../../contexts/SkinContext';
 
 // --- HELPERS ---
 
@@ -17,12 +18,15 @@ const getDiaoStatus = (trickPile: any[]) => {
 
 const truncateName = (name: string) => {
     if (!name) return "Player";
-    return name.length > 4 ? name.substring(0, 3) + '..' : name;
+    return name.length > 5 ? name.substring(0, 4) + '.' : name;
 };
+
+const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%23666'/%3E%3Cpath d='M20 90 Q50 60 80 90' fill='%23666'/%3E%3C/svg%3E";
 
 // --- PLAYER HUD ---
 
 export const PlayerListHUD = React.memo(({ players, bankerId, currentPlayerIndex, aiChatMessages }: { players: Player[], bankerId: number, currentPlayerIndex: number, aiChatMessages: Record<number, string | null> }) => {
+    const { skin } = useSkin();
     const displayPlayers = players.filter(p => p.type !== PlayerType.HUMAN);
 
     return (
@@ -36,52 +40,55 @@ export const PlayerListHUD = React.memo(({ players, bankerId, currentPlayerIndex
                 const diaoStatus = getDiaoStatus(player.trickPile);
                 const chatMsg = aiChatMessages[player.id];
 
-                // CSS Position Classes based on Seat and Orientation
-                // Note: These align with Scene3D's visual placement
                 let posClass = 'hidden';
                 if (player.position === 'Top') {
-                    // Top is always centered top
-                    posClass = 'top-[2%] left-1/2 -translate-x-1/2';
+                    // Mobile: Pinned to absolute top edge
+                    posClass = 'top-[2%] landscape:top-[2%] left-1/2 -translate-x-1/2';
                 } else if (player.position === 'Left') {
-                    // Mobile Portrait: Top-Left corner area
-                    // Landscape: Vertically centered left
-                    posClass = 'top-[15%] left-[2%] landscape:top-1/2 landscape:-translate-y-1/2 landscape:left-[2%] portrait:md:top-[30%]';
+                    // Mobile V33: Updated to 28% to sit ABOVE the hand stack (which is at 42%)
+                    // Avatar (28%) -> Hand (42%) -> Won (56%)
+                    posClass = 'top-[28%] left-[2%] landscape:top-[35%] landscape:left-[1%]';
                 } else if (player.position === 'Right') {
-                    // Mobile Portrait: Top-Right corner area
-                    // Landscape: Vertically centered right
-                    posClass = 'top-[15%] right-[2%] landscape:top-1/2 landscape:-translate-y-1/2 landscape:right-[2%] portrait:md:top-[30%]';
+                    // Mobile V33: Updated to 28%
+                    posClass = 'top-[28%] right-[2%] landscape:top-[35%] landscape:right-[1%]';
                 }
 
                 return (
                     <div key={player.id} className={`absolute flex flex-col items-center pointer-events-auto transition-all duration-500 ${posClass}`}>
-                        {/* Avatar Container */}
-                        <div className={`relative w-12 h-12 md:w-16 md:h-16 rounded-full overflow-hidden border-2 transition-all duration-300 shadow-lg ${isMyTurn ? 'border-[#c5a059] scale-110 shadow-[0_0_15px_rgba(197,160,89,0.6)] ring-2 ring-[#c5a059]/50 z-10' : 'border-[#3e2b22] bg-[#15100e] grayscale-[0.3]'}`}>
-                            <img src={avatarUrl} className="w-full h-full object-cover" alt={player.name} />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none"></div>
-
-                            {/* Badges */}
-                            <div className="absolute top-0 right-0 flex p-0.5 gap-0.5">
-                                {isBanker && <div className="w-3 h-3 md:w-4 md:h-4 bg-[#8c1c0b] text-[#e8e4d9] rounded-full flex items-center justify-center text-[6px] md:text-[8px] font-bold border border-[#b8860b]">庄</div>}
-                                {isBaiLao && <div className="w-3 h-3 md:w-4 md:h-4 bg-[#c5a059] text-[#1a0505] rounded-full flex items-center justify-center text-[6px] md:text-[8px] font-bold border border-[#3e2b22]">百</div>}
+                        <div className={`overflow-hidden ${skin.hud.avatarContainerClass(isMyTurn)} relative group`}>
+                            <img 
+                                src={avatarUrl} 
+                                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" 
+                                alt={player.name}
+                                onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90 pointer-events-none"></div>
+                            <div className="absolute top-1 left-1 z-10">
+                                <span className="text-[8px] md:text-[10px] font-mono text-[#e6c278] bg-black/60 px-1.5 rounded-[2px] border border-[#3e2b22] backdrop-blur-[2px] shadow-sm">
+                                    {player.hand.length}
+                                </span>
                             </div>
-
-                            <div className={`absolute bottom-0 inset-x-0 h-3 md:h-4 flex items-center justify-center ${diaoStatus.color}`}>
-                                <span className={`text-[6px] md:text-[8px] font-serif font-bold ${diaoStatus.textColor} leading-none scale-90`}>{diaoStatus.text}</span>
+                            <div className="absolute top-1 right-1 flex flex-col gap-0.5 items-end z-10">
+                                {isBanker && (
+                                    <div className="w-3.5 h-3.5 md:w-4 md:h-4 bg-[#8c1c0b] text-[#e8e4d9] rounded-full flex items-center justify-center text-[8px] md:text-[9px] font-bold border border-[#b8860b] shadow-md leading-none">
+                                        庄
+                                    </div>
+                                )}
+                                {isBaiLao && (
+                                    <div className="w-3.5 h-3.5 md:w-4 md:h-4 bg-[#047857] text-[#e8e4d9] rounded-full flex items-center justify-center text-[8px] md:text-[9px] font-bold border border-[#34d399] shadow-md leading-none">
+                                        百
+                                    </div>
+                                )}
+                            </div>
+                            <div className="absolute bottom-0 inset-x-0 flex flex-col z-10">
+                                <div className="text-[8px] md:text-[10px] text-center text-[#e8e4d9] font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,1)] truncate px-1 pb-[1px]">
+                                    {truncateName(profile?.username || player.name)}
+                                </div>
+                                <div className={`h-3.5 md:h-4 w-full flex items-center justify-center ${diaoStatus.color} backdrop-blur-sm`}>
+                                    <span className={`text-[7px] md:text-[9px] font-serif font-bold ${diaoStatus.textColor} scale-90`}>{diaoStatus.text}</span>
+                                </div>
                             </div>
                         </div>
-
-                        {/* Name Label */}
-                        <div className="mt-1">
-                            <span className="text-[8px] md:text-[10px] text-[#e8e4d9] font-bold leading-none drop-shadow-md bg-black/50 px-1.5 py-0.5 rounded-sm backdrop-blur-sm border border-white/10">
-                                {truncateName(profile?.username || player.name)}
-                            </span>
-                        </div>
-
-                        {/* Card Count */}
-                        <div className="absolute -top-1 -left-1 bg-[#1a0505] text-[#8c6239] text-[8px] w-4 h-4 flex items-center justify-center rounded-full border border-[#3e2b22] shadow-sm font-mono z-20">
-                            {player.hand.length}
-                        </div>
-
                         {chatMsg && (
                             <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-28 md:w-36 z-[300] animate-fade-in-up">
                                 <div className="bg-[#e8e4d9]/95 text-[#1a0505] p-2 rounded-sm text-[9px] md:text-[11px] font-serif shadow-xl border border-[#c5a059] text-center relative leading-tight">
@@ -99,16 +106,21 @@ export const PlayerListHUD = React.memo(({ players, bankerId, currentPlayerIndex
 
 // --- HUMAN HAND HUD ---
 
-export const HumanHandHUD = React.memo(({ player, isMyTurn, onCardClick, onDragPlay, onPlayConfirm, selectedCardId, highlightedCardIds, cardMarkers, oneClickPlay, canInteract }: any) => {
+export const HumanHandHUD = React.memo(({ player, isMyTurn, onCardClick, onDragPlay, onPlayConfirm, selectedCardId, highlightedCardIds, cardMarkers, oneClickPlay, canInteract, actionLabel, mianZhangCard }: any) => {
+    const { skin } = useSkin();
     const dragStateRef = useRef<{id: string, startX: number, startY: number, currentX: number, currentY: number} | null>(null);
     const [draggingId, setDraggingId] = useState<string | null>(null); 
     const [dragTransform, setDragTransform] = useState<{x: number, y: number} | null>(null);
     const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
     
     const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 375);
+    const [isPortrait, setIsPortrait] = useState(typeof window !== 'undefined' ? window.innerHeight > window.innerWidth : true);
 
     useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+            setIsPortrait(window.innerHeight > window.innerWidth);
+        };
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -125,6 +137,17 @@ export const HumanHandHUD = React.memo(({ player, isMyTurn, onCardClick, onDragP
         if (!canInteract) return; 
         if (oneClickPlay) onPlayConfirm(id); else onCardClick(id); 
     }, [canInteract, oneClickPlay, onPlayConfirm, onCardClick]);
+
+    const handleActionClick = () => {
+        if (!canInteract) return;
+        if (selectedCardId) onPlayConfirm(selectedCardId);
+        else if (highlightedCardIds && highlightedCardIds.size > 0) {
+            const firstId = Array.from(highlightedCardIds)[0];
+            onPlayConfirm(firstId);
+        } else if (player.hand.length > 0) {
+            onPlayConfirm(player.hand[0].id);
+        }
+    };
 
     const handleStart = (clientX: number, clientY: number, cardId: string) => {
         if (!canInteract) return;
@@ -163,90 +186,239 @@ export const HumanHandHUD = React.memo(({ player, isMyTurn, onCardClick, onDragP
     }, [handleLocalCardClick, onDragPlay]);
 
     const handSize = player.hand.length;
-    const centerIndex = (handSize - 1) / 2;
-    const isMobile = windowWidth < 768;
-    const availableWidth = windowWidth - 20; 
-    
-    // Dynamic Spacing Logic: Increase gap as cards decrease to prevent misclicks on mobile
-    let baseGap = isMobile ? 45 : 100;
-    if (isMobile) {
-        if (handSize <= 4) baseGap = 80;
-        else if (handSize <= 6) baseGap = 60;
-    }
-    
-    const idealTotalWidth = (handSize - 1) * baseGap;
-    let cardSpacing = baseGap;
-    if (idealTotalWidth > availableWidth) cardSpacing = availableWidth / Math.max(1, handSize - 1);
+    const isMobile = windowWidth < 768; 
 
-    const cardWidthRem = 5.5; 
+    // V45 Update: Slightly wider cards (5.8rem) and minimal padding (2px) to better fill mobile screen width
+    const CARD_WIDTH_REM = isMobile ? 5.8 : 7.5; 
+    const PIXELS_PER_REM = 16;
+    const CARD_WIDTH_PX = CARD_WIDTH_REM * PIXELS_PER_REM;
+    const SCREEN_PADDING = isMobile ? 2 : 100; 
+    const AVAILABLE_WIDTH = windowWidth - SCREEN_PADDING;
 
-    return (
-        <div className="fixed bottom-0 left-0 right-0 h-screen pointer-events-none z-[100]">
+    const getBasePosition = (i: number) => {
+        if (isMobile) {
+            let xOffset = 0;
+            const totalWidthNoOverlap = handSize * CARD_WIDTH_PX;
+            if (totalWidthNoOverlap <= AVAILABLE_WIDTH) {
+                const gap = 5; 
+                const totalSetWidth = totalWidthNoOverlap + ((handSize - 1) * gap);
+                const startX = -(totalSetWidth / 2) + (CARD_WIDTH_PX / 2);
+                xOffset = startX + i * (CARD_WIDTH_PX + gap);
+            } else {
+                const step = (AVAILABLE_WIDTH - CARD_WIDTH_PX) / (handSize - 1);
+                const startX = -(AVAILABLE_WIDTH / 2) + (CARD_WIDTH_PX / 2);
+                xOffset = startX + i * step;
+            }
+
+            return {
+                x: xOffset, y: 0, rot: 0, scale: 1.0, zIndex: 100 + i,
+                width: `${CARD_WIDTH_REM}rem`, marginLeft: `-${CARD_WIDTH_REM/2}rem`, 
+                bottom: '10px', transformOrigin: `center bottom`
+            };
+        } else {
+            const dArcRadius = 800; 
+            const dMaxFanAngle = 40; 
+            let dFanAngle = Math.min(dMaxFanAngle, handSize * 5);
+            const dStartAngle = -dFanAngle / 2;
+            const dAngleStep = handSize > 1 ? dFanAngle / (handSize - 1) : 0;
+            const angleDeg = dStartAngle + (i * dAngleStep);
             
-            {/* Avatar - Bottom Right */}
-            <div className="absolute bottom-[180px] md:bottom-[30px] right-[5%] md:right-[5%] pointer-events-auto flex flex-col items-center z-[150] animate-fade-in-up">
-                <div className={`relative w-16 h-16 md:w-20 md:h-20 rounded-full border-2 overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)] transition-all duration-300 ${isMyTurn ? 'border-[#c5a059] ring-2 ring-[#c5a059]/50' : 'border-[#3e2b22] grayscale-[0.3]'}`}>
-                    <img src={avatarUrl} className="w-full h-full object-cover" alt="Me" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none"></div>
-                    <div className="absolute top-1 right-1 flex flex-col gap-0.5 items-center">
-                        {isBanker && <span className="bg-[#8c1c0b] text-[#e8e4d9] text-[8px] w-4 h-4 flex items-center justify-center rounded-full border border-[#b8860b] shadow-sm font-bold">庄</span>}
-                        {isBaiLao && <span className="bg-[#c5a059] text-[#1a0505] text-[8px] w-4 h-4 flex items-center justify-center rounded-full border border-[#3e2b22] shadow-sm font-bold">百</span>}
-                    </div>
-                    <div className={`absolute bottom-0 inset-x-0 h-5 flex items-center justify-center ${diaoStatus.color}`}>
-                        <span className={`text-[8px] font-bold ${diaoStatus.textColor}`}>{diaoStatus.text}</span>
-                    </div>
-                </div>
-                <div className={`mt-1 text-lg font-bold font-serif ${player.score >= 0 ? 'text-[#4ade80]' : 'text-[#ff6b6b]'} drop-shadow-md bg-black/60 px-2 rounded-full border border-white/10`}>
-                    {player.score}
+            return {
+                x: 0, y: 0, rot: angleDeg, scale: 1.0, zIndex: 100 + i,
+                width: '7.5rem', marginLeft: '-3.75rem', 
+                bottom: '30px', transformOrigin: `50% ${dArcRadius}px`
+            };
+        }
+    };
+
+    // --- MOBILE PORTRAIT CONTROLS ---
+    const MobilePortraitControls = () => {
+        const isActive = canInteract;
+        
+        // V11 Update: Added more padding and specific separator class to fix fused text
+        const baseClasses = "flex items-center gap-6 px-6 py-2 rounded-full transition-all duration-500 backdrop-blur-md border shadow-lg min-w-[240px] justify-between relative overflow-hidden";
+        
+        const activeClasses = "bg-gradient-to-r from-[#3e2b22] to-[#1a0b05] border-[#d4af37] cursor-pointer animate-pulse-slow ring-1 ring-[#d4af37]/50 shadow-[0_0_15px_rgba(212,175,55,0.3)] transform scale-110";
+        const passiveClasses = "bg-[#0a0605]/80 border-[#3e2b22] shadow-[inset_0_1px_4px_rgba(0,0,0,0.8)] grayscale-[0.3]";
+
+        return (
+            <div 
+                // V21 Update: Dropped to 15% (from 18%) to clear the table loot view
+                className={`absolute bottom-[15%] left-1/2 -translate-x-1/2 z-[90] transition-all duration-500 ease-out flex items-center justify-center`}
+                onClick={isActive ? handleActionClick : undefined}
+            >
+                <div className={`${baseClasses} ${isActive ? activeClasses : passiveClasses}`}>
+                     
+                     {/* Avatar (Left Side) */}
+                     <div className={`relative w-8 h-8 rounded-full border-2 ${isActive ? 'border-[#ffdb7a] ring-2 ring-[#5c4025]' : 'border-[#5c4025]'} overflow-hidden shrink-0 transition-colors duration-500`}>
+                         <img src={avatarUrl} className="w-full h-full object-cover" alt="Me" onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}/>
+                     </div>
+                     
+                     {/* Vertical Separator - V11: Explicit Divider with Margin */}
+                     <div className={`absolute left-[3.5rem] top-1/2 -translate-y-1/2 w-[1px] h-6 ${isActive ? 'bg-[#ffdb7a]/50' : 'bg-[#3e2b22]'}`}></div>
+
+                     {/* Content (Center/Right Side) */}
+                     <div className="flex items-center flex-1 justify-center transition-all duration-300 pl-4">
+                         {isActive ? (
+                             <span className="text-[#ffdb7a] font-calligraphy text-2xl font-bold tracking-widest drop-shadow-md whitespace-nowrap px-2">
+                                 {actionLabel || "出牌"}
+                             </span>
+                         ) : (
+                             <div className="flex items-center gap-3 px-1">
+                                 <div className="text-[10px] text-[#8c6239] font-serif font-bold tracking-wider uppercase">
+                                     {isBanker ? 'Banker' : (isBaiLao ? 'Million' : 'Wait')}
+                                 </div>
+                                 <div className="w-[1px] h-3 bg-[#3e2b22]"></div>
+                                 <div className={`text-[10px] font-mono font-bold ${player.score >= 0 ? 'text-[#4ade80]' : 'text-[#ff6b6b]'}`}>
+                                     {player.score}
+                                 </div>
+                             </div>
+                         )}
+                     </div>
                 </div>
             </div>
+        );
+    };
 
-            {/* Hand Cards Container */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-end justify-center pointer-events-auto pb-4 w-full h-[220px]">
-                {/* 
-                    LAYOUT FIX: 
-                    Instead of width: 100%, we use width: 0px and rely on absolute positioning from center.
-                    This prevents card 'squashing' in flex containers on some mobile browsers/themes.
-                */}
-                <div className="relative flex items-end justify-center transition-all duration-500" style={{ position: 'absolute', bottom: '2%', width: '0px' }}>
-                    {player.hand.map((card: Card, i: number) => {
-                        const isDragging = draggingId === card.id;
-                        const xOffset = (i - centerIndex) * cardSpacing;
-                        const zIndex = isDragging ? 1000 : (hoveredCardId === card.id ? 200 : 100 + i);
-                        const isVisuallySelected = canInteract && (selectedCardId === card.id || hoveredCardId === card.id); 
-                        const isHighlighted = highlightedCardIds && highlightedCardIds.has(card.id); 
-                        const markers = cardMarkers ? cardMarkers[card.id] : { isMature: false, isForbidden: false };
-                        const liftAmount = isMobile ? -20 : -40;
-                        const dragStyle = isDragging && dragTransform ? { transform: `translate(${xOffset + dragTransform.x}px, ${-50 + dragTransform.y}px) scale(1.15)` } : { transform: `translateX(${xOffset}px) ${isVisuallySelected && !isDragging ? `translateY(${liftAmount}px) scale(1.05)` : 'translateY(0px)'}` };
-                        
-                        return ( 
-                            <div key={card.id} className="pointer-events-auto select-none touch-none will-change-transform" 
-                                    style={{ 
-                                        position: 'absolute', bottom: 0, 
-                                        // CENTERING FIX: Strictly position at 50% left minus half card width
-                                        left: '50%', marginLeft: `-${cardWidthRem/2}rem`, 
-                                        ...dragStyle, zIndex: zIndex, transformOrigin: 'bottom center', width: `${cardWidthRem}rem`, height: '8.5rem', 
-                                        cursor: canInteract ? 'grab' : 'not-allowed', transition: isDragging ? 'none' : 'transform 0.15s ease-out' 
-                                    }} 
-                                    onMouseDown={(e) => handleStart(e.clientX, e.clientY, card.id)} 
-                                    onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY, card.id)} 
-                                    onMouseEnter={() => setHoveredCardId(card.id)} 
-                                    onMouseLeave={() => setHoveredCardId(null)}
-                            >
-                                <div className="shadow-lg">
-                                    <CardComponent 
-                                        card={card} isHand isDisabled={false} isSelected={isVisuallySelected && !isDragging} 
-                                        suitStatus={markers.isMature ? 'SAFE' : (markers.isForbidden ? 'FORBIDDEN' : 'NEUTRAL')} 
-                                        isDraggable={canInteract} isSuggested={isHighlighted} 
-                                        isSuspectedBaiLao={player.isSuspectedBaiLao} isBaiLao={false} isBanker={false} isFaceDown={false}
-                                        className={`shadow-card-float ring-1 ring-white/10 ${isDragging ? 'scale-105' : ''}`} 
-                                        onClick={() => handleLocalCardClick(card.id)} 
-                                    />
-                                </div>
-                            </div> 
-                        );
-                    })}
+    return (
+        <div className="fixed inset-0 pointer-events-none z-[100] perspective-container overflow-visible" style={{ perspective: '1200px' }}>
+            
+            {/* MIAN ZHANG INDICATOR (Top Left 2D) */}
+            {mianZhangCard && (
+                <div className="absolute top-[2%] left-4 z-[200] flex flex-col items-center gap-1 animate-fade-in pointer-events-auto">
+                    <div className="relative w-8 h-12">
+                        {[...Array(7)].map((_, i) => (
+                            <div key={i} className="absolute inset-0 border border-[#3e2b22] bg-[#0a0505] rounded-[2px]" 
+                                 style={{ 
+                                     transform: `translate(${i * 2}px, ${i * 2}px)`, 
+                                     zIndex: -i 
+                                 }}>
+                            </div>
+                        ))}
+                        <div className="absolute inset-0 transform scale-75 origin-top-left z-10" style={{ transform: 'translate(4px, 4px)' }}>
+                            <CardComponent card={mianZhangCard} isSmall isInverted={true} isFaceDown={false} />
+                        </div>
+                    </div>
                 </div>
+            )}
+
+            {isMobile && isPortrait ? (
+                <MobilePortraitControls />
+            ) : (
+                /* Desktop/Landscape Avatar */
+                <div className="absolute bottom-[40px] right-[5%] pointer-events-auto flex flex-col items-center z-[150] animate-fade-in-up">
+                    <div className={`overflow-hidden ${skin.hud.avatarContainerClass(isMyTurn)} relative group`}>
+                        <img src={avatarUrl} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" alt="Me" onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}/>
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90 pointer-events-none"></div>
+                        <div className="absolute top-1 right-1 flex flex-col gap-0.5 items-end z-10">
+                            {isBanker && <div className="w-3.5 h-3.5 md:w-4 md:h-4 bg-[#8c1c0b] text-[#e8e4d9] rounded-full flex items-center justify-center text-[8px] md:text-[9px] font-bold border border-[#b8860b] shadow-sm leading-none">庄</div>}
+                            {isBaiLao && <div className="w-3.5 h-3.5 md:w-4 md:h-4 bg-[#047857] text-[#e8e4d9] rounded-full flex items-center justify-center text-[8px] md:text-[9px] font-bold border border-[#34d399] shadow-sm leading-none">百</div>}
+                        </div>
+                        <div className="absolute bottom-0 inset-x-0 flex flex-col z-10">
+                            <div className="text-[8px] md:text-[10px] text-center text-[#e8e4d9] font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.1)] truncate px-1 pb-[1px]">
+                                {truncateName("You")}
+                            </div>
+                            <div className={`h-3.5 md:h-4 w-full flex items-center justify-center ${diaoStatus.color} backdrop-blur-sm`}>
+                                <span className={`text-[7px] md:text-[9px] font-serif font-bold ${diaoStatus.textColor} scale-90`}>{diaoStatus.text}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={`mt-1 text-lg font-bold font-serif ${player.score >= 0 ? 'text-[#4ade80]' : 'text-[#ff6b6b]'} drop-shadow-md bg-black/60 px-2 rounded-full border border-white/10`}>
+                        {player.score}
+                    </div>
+                </div>
+            )}
+
+            {/* HAND CONTAINER */}
+            <div className="absolute left-1/2 w-full flex justify-center items-end pointer-events-none" style={{ transformStyle: 'preserve-3d', transform: 'translateX(-50%)', bottom: '0px', height: '0px', zIndex: 200 }}>
+                {player.hand.map((card: Card, i: number) => {
+                    const pos = getBasePosition(i);
+                    const isDragging = draggingId === card.id;
+                    if (isDragging) return null;
+
+                    const style: React.CSSProperties = isMobile ? {
+                        position: 'absolute', left: '50%', bottom: pos.bottom,
+                        width: pos.width, marginLeft: pos.marginLeft,
+                        transform: `translate3d(${pos.x}px, ${pos.y}px, ${i}px)`, 
+                        zIndex: 300 
+                    } : {
+                        position: 'absolute', left: '50%', bottom: pos.bottom,
+                        width: pos.width, marginLeft: pos.marginLeft,
+                        transformOrigin: pos.transformOrigin,
+                        transform: `rotateZ(${pos.rot}deg) translateZ(${i}px)`,
+                        zIndex: 300
+                    };
+
+                    return (
+                        <div key={`hit-${card.id}`}
+                             className="pointer-events-auto opacity-0 cursor-pointer"
+                             style={{ ...style, height: isMobile ? '8rem' : '10rem' }} 
+                             onMouseDown={(e) => handleStart(e.clientX, e.clientY, card.id)} 
+                             onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY, card.id)} 
+                             onMouseEnter={() => setHoveredCardId(card.id)} 
+                             onMouseLeave={() => setHoveredCardId(null)}
+                        />
+                    );
+                })}
+
+                {player.hand.map((card: Card, i: number) => {
+                    const pos = getBasePosition(i);
+                    const isDragging = draggingId === card.id;
+                    const isHovered = hoveredCardId === card.id;
+                    const isVisuallySelected = canInteract && (selectedCardId === card.id || isHovered);
+                    const isHighlighted = highlightedCardIds && highlightedCardIds.has(card.id);
+                    const markers = cardMarkers ? cardMarkers[card.id] : { isMature: false, isForbidden: false };
+
+                    let style: React.CSSProperties = {};
+
+                    if (isDragging && dragTransform) {
+                        style = {
+                            position: 'absolute', left: '50%', bottom: isMobile ? '100px' : '150px',
+                            transform: `translate(${dragTransform.x}px, ${dragTransform.y}px) scale(1.1) rotateZ(0deg)`,
+                            width: isMobile ? '5.5rem' : '7.5rem',
+                            transformOrigin: 'center center', zIndex: 1000,
+                        };
+                    } else if (isMobile) {
+                        const liftY = isVisuallySelected ? -30 : 0;
+                        const liftZ = isVisuallySelected ? 50 : 0;
+                        const scale = isVisuallySelected ? 1.15 : 1.0;
+                        
+                        style = {
+                            position: 'absolute', left: '50%', bottom: pos.bottom,
+                            marginLeft: pos.marginLeft, width: pos.width,
+                            transformOrigin: 'center bottom',
+                            transform: `translate3d(${pos.x}px, ${pos.y + liftY}px, ${i + liftZ}px) scale(${scale})`, 
+                            zIndex: isVisuallySelected ? 200 : pos.zIndex,
+                            transition: 'transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                        };
+                    } else {
+                        let liftY = 0; let liftZ = 0; let scale = 1.0; 
+                        const rotZ = pos.rot;
+                        if (isVisuallySelected) { liftY = -30; liftZ = 50; scale = 1.15; }
+                        
+                        style = {
+                            position: 'absolute', left: '50%', bottom: pos.bottom,
+                            marginLeft: pos.marginLeft, width: pos.width,
+                            transformOrigin: pos.transformOrigin,
+                            transform: `rotateZ(${rotZ}deg) translateY(${liftY}px) translateZ(${i + liftZ}px) scale(${scale})`,
+                            zIndex: isVisuallySelected ? 200 : pos.zIndex,
+                            transition: 'transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                        };
+                    }
+
+                    return (
+                        <div key={`vis-${card.id}`} className="pointer-events-none" style={style}>
+                            <div className="w-full h-full rounded-[4px]">
+                                <CardComponent 
+                                    card={card} isHand isDisabled={false} isSelected={isVisuallySelected} 
+                                    suitStatus={markers.isMature ? 'SAFE' : (markers.isForbidden ? 'FORBIDDEN' : 'NEUTRAL')} 
+                                    isDraggable={false} isSuggested={isHighlighted} 
+                                    isSuspectedBaiLao={player.isSuspectedBaiLao} isBaiLao={false} isBanker={false} isFaceDown={false}
+                                />
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
