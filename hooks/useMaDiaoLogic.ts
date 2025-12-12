@@ -268,6 +268,7 @@ export const useMaDiaoGame = (config: GameConfig) => {
   };
 
   const executePlayCard = async (playerId: number, cardId: string, bypassRisk: boolean = false) => {
+    // 1. Snapshot current state for logic
     const player = players.find(p => p.id === playerId);
     if (!player) return;
     const card = player.hand.find(c => c.id === cardId);
@@ -306,21 +307,31 @@ export const useMaDiaoGame = (config: GameConfig) => {
     const isMillionFaceUp = isMillion && !isFaceDown;
     const alreadyRevealed = players.some(p => p.isBaiLaoRevealed);
 
-    const newHand = player.hand.filter(c => c.id !== cardId);
-    const updatedPlayers = players.map(p => {
-        let newP = p.id === playerId ? { ...p, hand: newHand } : p;
-        if (isMillionFaceUp) {
-            if (p.id === playerId) newP.isBaiLaoRevealed = true;
-            newP.isSuspectedBaiLao = false;
-        } else if (!alreadyRevealed) {
-            if (p.id === playerId && isCashLead && !isWanWan && !isFaceDown) {
-                if (!newP.isSuspectedBaiLao) newP.isSuspectedBaiLao = true;
+    // 2. ATOMIC STATE UPDATES (Functional Update Pattern)
+    // We update players state using the previous state to avoid race conditions
+    setPlayers(currentPlayers => {
+        return currentPlayers.map(p => {
+            if (p.id === playerId) {
+                // Remove card from hand
+                const newHand = p.hand.filter(c => c.id !== cardId);
+                let newP = { ...p, hand: newHand };
+                
+                // Update Metadata (Bai Lao status)
+                if (isMillionFaceUp) {
+                    newP.isBaiLaoRevealed = true;
+                    newP.isSuspectedBaiLao = false;
+                } else if (!alreadyRevealed) {
+                    if (isCashLead && !isWanWan && !isFaceDown) {
+                        if (!newP.isSuspectedBaiLao) newP.isSuspectedBaiLao = true;
+                    }
+                }
+                return newP;
             }
-        }
-        return newP;
+            // Logic for other players (e.g. if one reveals Bai Lao, others might update suspicion, but here only current player changes)
+            return p;
+        });
     });
 
-    setPlayers(updatedPlayers);
     const newTableCards = [...tableCards, { playerId, card, isFaceDown }];
     setTableCards(newTableCards);
     setRecordedCards(prev => [...prev, card]);
@@ -340,8 +351,16 @@ export const useMaDiaoGame = (config: GameConfig) => {
     }
 
     setSelectedCardId(null);
-    if (newTableCards.length === 4) { setTimeout(() => resolveTrick(newTableCards, updatedPlayers), 1000); } 
-    else { advanceTurn((currentPlayerIndex + 1) % 4); }
+    
+    // Resolve trick AFTER state updates are committed
+    if (newTableCards.length === 4) { 
+        // We need the *latest* players for resolution, but we can't get them synchronously from state.
+        // However, resolveTrick takes `currentPlayers` as arg. We can simulate the state update locally for the logic.
+        const nextPlayersState = players.map(p => p.id === playerId ? { ...p, hand: p.hand.filter(c => c.id !== cardId) } : p);
+        setTimeout(() => resolveTrick(newTableCards, nextPlayersState), 1000); 
+    } else { 
+        advanceTurn((currentPlayerIndex + 1) % 4); 
+    }
   };
 
   // Bi Zhang

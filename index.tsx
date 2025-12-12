@@ -2,6 +2,7 @@
 import React, { ErrorInfo, ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
 // Helper to access the global logger safely
 const safeLog = (msg: string, type: 'info' | 'error' = 'info') => {
@@ -95,6 +96,9 @@ const mount = () => {
             </ErrorBoundary>
         );
         safeLog("Render command dispatched.");
+
+        // Register Service Worker for PWA capability
+        serviceWorkerRegistration.register();
 
         // CLEAR WATCHDOG
         const w = window as any;

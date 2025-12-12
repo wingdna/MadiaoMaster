@@ -249,4 +249,19 @@ const CardBase: React.FC<CardProps> = (props) => {
   );
 };
 
-export default React.memo(CardBase);
+// --- ARCHITECTURAL OPTIMIZATION ---
+// Use strict equality for props to avoid re-renders of static cards in the discard pile.
+export default React.memo(CardBase, (prev, next) => {
+    return (
+        prev.card.id === next.card.id &&
+        prev.isSelected === next.isSelected &&
+        prev.isFaceDown === next.isFaceDown &&
+        prev.isDisabled === next.isDisabled &&
+        prev.isSuggested === next.isSuggested &&
+        prev.isWinner === next.isWinner &&
+        prev.isInverted === next.isInverted &&
+        prev.lanternGlow === next.lanternGlow &&
+        // Ignore style changes unless position changes significantly (optimization for small jitter)
+        prev.style?.transform === next.style?.transform
+    );
+});

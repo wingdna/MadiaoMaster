@@ -42,6 +42,18 @@ const ImperialEffectOverlay: React.FC<{ effect: LeadingEffectType }> = ({ effect
     );
 };
 
+// --- DYNAMIC SHADOWS (THEATER/KABUKI) ---
+const TheaterShadows: React.FC = () => (
+    <div className="absolute inset-0 pointer-events-none opacity-30 mix-blend-soft-light overflow-hidden" style={{ zIndex: 1 }}>
+        <svg viewBox="0 0 500 500" className="w-full h-full animate-actor-move" style={{ filter: 'blur(8px)' }}>
+            {/* Abstract Dancer Silhouette */}
+            <path d="M250,450 C200,450 150,350 150,250 C150,150 220,100 250,100 C280,100 350,150 350,250 C350,350 300,450 250,450 Z" fill="#000" />
+            <circle cx="200" cy="200" r="40" fill="#000" /> {/* Fan or Sleeve */}
+            <rect x="300" y="150" width="20" height="200" transform="rotate(15)" fill="#000" /> {/* Staff/Sword */}
+        </svg>
+    </div>
+);
+
 // ... Characters ...
 const BodyFront: React.FC = () => <div className="w-full h-full bg-[#0a0505] opacity-60 blur-xl rounded-full"></div>; 
 const ChairStub: React.FC = () => <div className="w-full h-full border-b-4 border-[#3e1010] opacity-50"></div>;
@@ -54,6 +66,7 @@ export const ImperialSkin: ISkin = {
     layout: {
         backgroundClass: "bg-[#020101]",
         atmosphereComponent: ImperialAtmosphere,
+        EnvironmentalShadows: TheaterShadows, // ADDED SHADOWS
         
         tableSurfaceClass: "rounded-[32px] shadow-[0_40px_100px_black] border border-[#3e1010]/60 overflow-hidden",
         

@@ -1,5 +1,5 @@
 
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, memo } from 'react';
 import CardComponent from '../Card';
 import { Card, Player, GamePhase, KaiChongDetail, CardColor, CardRank } from '../../types';
 import { useSkin } from '../../contexts/SkinContext';
@@ -249,6 +249,10 @@ const TableSlab = React.memo(({ skin, width, height, thickness = 40, visualYOffs
                               opacity: 1.0 
                           }}>
                      </div>
+                     
+                     {/* Dynamic Environmental Shadows Layer */}
+                     {skin.layout.EnvironmentalShadows && <skin.layout.EnvironmentalShadows />}
+
                      {skin.layout.tableReflectivity && (
                          <div className="absolute inset-0 w-full h-full rounded-[inherit] mix-blend-overlay opacity-40 pointer-events-none"
                               style={{
@@ -289,20 +293,19 @@ const getPlayerGlow = (player: Player) => {
     return null;
 };
 
+// --- UPDATED BULLET CARD: COMBAT ANIMATIONS ---
 const BulletCard = React.memo(({ card, playerPos, spread, centerOffset, isFaceDown, isWinner }: any) => {
-    const [style, setStyle] = useState<React.CSSProperties>(() => {
-        let startX = 0, startY = 0;
-        switch(playerPos) {
-            case 'Bottom': startY = 400; break;
-            case 'Top': startY = -400; break;
-            case 'Left': startX = -400; break;
-            case 'Right': startX = 400; break;
-        }
-        return {
-            transform: `translate(-50%, -50%) translate(${startX}px, ${startY}px) rotateX(-25deg) scale(1.5) translateZ(35px)`,
-            opacity: 0,
-            transition: 'none'
-        };
+    // Determine animation class for INNER element
+    const animClass = useMemo(() => {
+        if (isWinner) return 'animate-card-smash'; // Victory: Smash/Slash
+        if (isFaceDown) return 'animate-card-wither'; // Defeat: Wither/Burn
+        return 'animate-fade-in'; // Neutral Enter
+    }, [isWinner, isFaceDown]);
+
+    // Position State for OUTER element (The anchor)
+    const [posStyle, setPosStyle] = useState<React.CSSProperties>({
+        transform: 'translate(-50%, -50%)', // Initial Centered
+        opacity: 0
     });
 
     useEffect(() => {
@@ -318,25 +321,36 @@ const BulletCard = React.memo(({ card, playerPos, spread, centerOffset, isFaceDo
         tx += cx;
         ty += cy;
 
-        const baseZ = 35; 
-        const z = isWinner ? baseZ + 40 : baseZ;
-        const scale = isWinner ? 1.2 : 1.0;
-
+        const baseZ = isWinner ? 80 : 35; // Winner pops up above others
+        
+        // Apply position to Outer Container
         const raf = requestAnimationFrame(() => {
-            setStyle({
-                transform: `translate(-50%, -50%) translate(${tx}px, ${ty}px) rotateX(-25deg) scale(${scale}) translateZ(${z}px)`,
+            setPosStyle({
+                transform: `translate(-50%, -50%) translate(${tx}px, ${ty}px) translateZ(${baseZ}px) rotateX(-25deg)`,
                 opacity: 1,
-                transition: 'transform 0.4s cubic-bezier(0.2, 1.3, 0.4, 1), opacity 0.3s ease-out'
+                transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease-out'
             });
         });
         return () => cancelAnimationFrame(raf);
     }, [playerPos, spread, centerOffset, isWinner]);
 
     return (
-        <div className="absolute left-1/2 top-1/2 w-16 h-24" style={style}>
-            <CardComponent card={card} isTrick isFaceDown={isFaceDown} isWinner={isWinner} isSmall={false} />
+        <div className="absolute left-1/2 top-1/2 w-16 h-24" style={{ ...posStyle, transformStyle: 'preserve-3d' }}>
+            {/* INNER: Handles Animation Effects (Scale/Rotate/Filter) without breaking position */}
+            <div className={`w-full h-full ${animClass}`} style={{ transformStyle: 'preserve-3d' }}>
+                <CardComponent card={card} isTrick isFaceDown={isFaceDown} isWinner={isWinner} isSmall={false} />
+                {/* Slash Overlay Effect */}
+                {isWinner && (
+                    <div className="absolute inset-[-50%] bg-white mix-blend-overlay animate-slash pointer-events-none z-50"></div>
+                )}
+            </div>
         </div>
     );
+}, (prev, next) => {
+    return prev.card.id === next.card.id && 
+           prev.isWinner === next.isWinner && 
+           prev.isFaceDown === next.isFaceDown &&
+           prev.playerPos === next.playerPos;
 });
 
 const TableCards = React.memo(({ cards, winnerId, layoutConfig, players }: any) => {
@@ -361,6 +375,15 @@ const TableCards = React.memo(({ cards, winnerId, layoutConfig, players }: any) 
             })}
         </div>
     );
+}, (prev, next) => {
+    // Only re-render if card list changes or winner changes
+    if (prev.winnerId !== next.winnerId) return false;
+    if (prev.cards.length !== next.cards.length) return false;
+    // Deep check card IDs
+    for (let i = 0; i < prev.cards.length; i++) {
+        if (prev.cards[i].card.id !== next.cards[i].card.id) return false;
+    }
+    return true;
 });
 
 const AIHandCompact = React.memo(({ count, baseRotation = 0, scale = 1, alignLeft = false, alignRight = false, skin }: { count: number, baseRotation: number, scale: number, alignLeft?: boolean, alignRight?: boolean, skin: any }) => {
@@ -435,6 +458,10 @@ const WonCardsGrid = React.memo(({ cards, baseRotation = 0, scale = 0.5, potCard
             })}
         </div>
     );
+}, (prev, next) => {
+    // Heavy optimization: Only re-render won pile if card count changes
+    if (prev.cards.length === next.cards.length && prev.scale === next.scale) return true;
+    return false;
 });
 
 const PlayerZone3D = React.memo(({ player, position, isMyTurn, potCardIds, layoutConfig, showPaperDolls }: any) => {
@@ -487,9 +514,25 @@ const PlayerZone3D = React.memo(({ player, position, isMyTurn, potCardIds, layou
             {player.capturedCards?.length > 0 && <div className={`absolute ${wonCardsPointerEvents} transition-all duration-500 opacity-90`} style={{ ...wonPos }}><WonCardsGrid cards={player.capturedCards} baseRotation={zoneRot} scale={finalWonScale} potCardIds={potCardIds} lanternGlow={lanternGlow} playerId={player.id} forceVerticalLayout={forceVerticalWonGrid} align={align} isVertical={layoutConfig.isVertical} isFramed={true} hideBackground={hideWonBackground} hideLabel={hideWonLabel} /></div>}
         </div>
     );
+}, (prev, next) => {
+    // Deep equality check to prevent re-render of complex AI zones
+    const p1 = prev.player;
+    const p2 = next.player;
+    
+    // Core property check
+    if (p1.id !== p2.id) return false;
+    if (prev.isMyTurn !== next.isMyTurn) return false;
+    if (p1.hand.length !== p2.hand.length) return false;
+    if (p1.capturedCards.length !== p2.capturedCards.length) return false;
+    if (p1.isBaiLaoRevealed !== p2.isBaiLaoRevealed) return false;
+    if (p1.isDealer !== p2.isDealer) return false;
+    if (prev.showPaperDolls !== next.showPaperDolls) return false;
+    if (prev.layoutConfig.isVertical !== next.layoutConfig.isVertical) return false;
+
+    return true;
 });
 
-// --- UPDATED POT STACK: Altar Spiral for Mobile Portrait ---
+// --- UPDATED POT STACK ---
 const PotStack = React.memo(({ pot, mianZhang, phase, kaiChongCardIndex, layoutConfig, lastGameEvent, kaiChongHistory }: any) => {
     if (phase !== GamePhase.KAI_CHONG) return null;
     const isKaiChong = phase === GamePhase.KAI_CHONG; 
@@ -509,6 +552,9 @@ const PotStack = React.memo(({ pot, mianZhang, phase, kaiChongCardIndex, layoutC
         } return null;
     };
 
+    // Counter for failed (unmatched) cards to stack them regularly
+    let failedCardCount = 0;
+
     return (
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', transformStyle: 'preserve-3d', zIndex: 5 }}>
             {visiblePot.map((c: Card, i: number) => {
@@ -520,21 +566,29 @@ const PotStack = React.memo(({ pot, mianZhang, phase, kaiChongCardIndex, layoutC
                 let tx = 0; let ty = 0; let rot = 0; let s = currentScale; let z = i * 2; 
                 
                 if (isKaiChong) {
-                    if (isVertical) {
-                        // VERTICAL SPIRAL FOR MOBILE PORTRAIT
-                        // Center X = 0 (Relative to Compass)
+                    if (isRevealed && !wasMatched) {
+                        // --- UNMATCHED / FAILED CARDS LOGIC ---
+                        // Position them regularly from top to bottom inside the compass, rotated 90deg
+                        const startY = -150; 
+                        const stepY = 30;
+                        tx = 0; // Center X
+                        ty = startY + (failedCardCount * stepY);
+                        rot = 90 + (Math.random() * 4 - 2); // Mostly 90, slight jitter for realism
+                        s = currentScale * 0.9; 
+                        z = 20 + failedCardCount; // Just above glass, below flying cards
+                        failedCardCount++;
+                    } 
+                    else if (isVertical) {
+                        // Future/Current Pile Logic (Vertical Layout)
                         const spacing = 50 * currentScale; 
                         const startY = -200; 
-                        
-                        // "Altar Spiral" Logic
-                        const spiralOffset = Math.sin(i * 0.6) * 30; // Snake/S-Curve offset
-                        
+                        const spiralOffset = Math.sin(i * 0.6) * 30; 
                         tx = spiralOffset;
                         ty = startY + (i * spacing);
-                        rot = i * 8; // Gentle twist for aesthetic
+                        rot = i * 8; 
                         
                     } else {
-                        // Standard Landscape Vertical Stack
+                        // Future/Current Pile Logic (Desktop Layout)
                         const stepY = 40; 
                         const startY = -120; 
                         ty = startY + (i * stepY);
@@ -562,6 +616,8 @@ const PotStack = React.memo(({ pot, mianZhang, phase, kaiChongCardIndex, layoutC
                 const isFaceDown = isFuture; 
                 const glow = getCardGlow(c, i);
                 
+                // Use a different transition for failed cards to make them "slide" into place
+                const isFailedMove = isRevealed && !wasMatched;
                 const flightStyle = (wasMatched && lastGameEvent?.type === 'KAI_CHONG_SUCCESS' && indexMatch(i, kaiChongCardIndex - 1))
                     ? { transition: 'transform 0.4s cubic-bezier(0.5, 0, 0.2, 1), opacity 0.4s ease-in' }
                     : { transition: 'all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)' };
@@ -578,6 +634,13 @@ const PotStack = React.memo(({ pot, mianZhang, phase, kaiChongCardIndex, layoutC
             })}
         </div>
     );
+}, (prev, next) => {
+    // Only re-render Pot if phase, card index, or last event changes
+    if (prev.phase !== next.phase) return false;
+    if (prev.kaiChongCardIndex !== next.kaiChongCardIndex) return false;
+    if (prev.lastGameEvent !== next.lastGameEvent) return false;
+    if (prev.layoutConfig.isVertical !== next.layoutConfig.isVertical) return false;
+    return true;
 });
 
 // Helper for exact index matching to prevent "flying" old cards
@@ -630,4 +693,19 @@ export const Scene3D = React.memo(({ state, interactionState }: any) => {
             </div>
         </div>
     );
+}, (prev, next) => {
+    // Root Level Optimization:
+    // Only re-render Scene3D if CORE layout or phase changes. 
+    // Sub-components handle their own fine-grained updates.
+    if (prev.state.phase !== next.state.phase) return false;
+    if (prev.state.currentPlayerIndex !== next.state.currentPlayerIndex) return false;
+    
+    // We intentionally ignore `gameMessage` changes here to prevent full scene rebuilds on chat bubbles.
+    // However, we MUST check if `tableCards` changed to pass down to children.
+    if (prev.state.tableCards !== next.state.tableCards) return false;
+    
+    // Check if players array reference changed (e.g. hand count update)
+    if (prev.state.players !== next.state.players) return false;
+
+    return true; 
 });

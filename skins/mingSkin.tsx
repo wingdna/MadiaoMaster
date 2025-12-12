@@ -43,6 +43,27 @@ const MingEffectOverlay: React.FC<{ effect: LeadingEffectType }> = ({ effect }) 
     );
 };
 
+// --- DYNAMIC SHADOWS (BAMBOO/BANANA LEAVES) ---
+const BambooShadows: React.FC = () => (
+    <div className="absolute inset-0 pointer-events-none opacity-40 mix-blend-multiply overflow-hidden" style={{ zIndex: 1 }}>
+        <svg viewBox="0 0 500 500" className="w-full h-full animate-shadow-sway origin-bottom-left" style={{ filter: 'blur(4px)' }}>
+            <g transform="rotate(45) translate(100, -100)">
+                {/* Bamboo Stalks */}
+                <rect x="50" y="0" width="10" height="600" fill="#1a0f0a" />
+                <rect x="150" y="0" width="8" height="600" fill="#1a0f0a" />
+                
+                {/* Leaves */}
+                <ellipse cx="60" cy="100" rx="60" ry="10" transform="rotate(30)" fill="#1a0f0a" />
+                <ellipse cx="160" cy="200" rx="70" ry="12" transform="rotate(-20)" fill="#1a0f0a" />
+                <ellipse cx="60" cy="300" rx="50" ry="8" transform="rotate(45)" fill="#1a0f0a" />
+                <ellipse cx="160" cy="400" rx="80" ry="15" transform="rotate(-10)" fill="#1a0f0a" />
+            </g>
+        </svg>
+        {/* Warm Sunset Projection Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#ff8c00]/10 to-transparent mix-blend-overlay"></div>
+    </div>
+);
+
 // ... Characters ...
 const BodyFront: React.FC = () => (
     <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)] filter contrast-125 sepia-[0.3]">
@@ -69,6 +90,7 @@ export const MingSkin: ISkin = {
     layout: {
         backgroundClass: "bg-[#0a0604]", 
         atmosphereComponent: MingAtmosphere,
+        EnvironmentalShadows: BambooShadows, // ADDED SHADOWS
         
         tableSurfaceClass: "rounded-[12px] overflow-hidden shadow-[0_50px_120px_black] border border-[#5c3a21]/50",
         
@@ -113,12 +135,9 @@ export const MingSkin: ISkin = {
             let transformClass = ''; 
             if (props.isSelected) transformClass = '-translate-y-4 scale-105 z-[100] shadow-[0_0_30px_rgba(217,199,176,0.4)]';
             
-            // Add a subtle texture class to the container via utility if needed, 
-            // but Card.tsx handles inner texture.
             return `relative flex flex-col group rounded-[4px] ${sizeClass} ${bgClass} ${hoverClass} ${transformClass}`;
         },
         getMainColorClass: (color, isInverted) => {
-            // Woodblock Ink Effect
             if (isInverted) return 'text-[#d9c7b0] font-serif tracking-widest opacity-90 drop-shadow-sm'; 
             if (color === CardColor.RED) return 'text-[#8c1c0b] font-bold font-calligraphy opacity-90 mix-blend-multiply'; 
             if (color === CardColor.GREEN) return 'text-[#2e4c2e] font-bold font-calligraphy opacity-95 mix-blend-multiply'; 
@@ -133,7 +152,6 @@ export const MingSkin: ISkin = {
             if (props.isFaceDown) return 'border border-[#3e2b22]';
             if (props.isWinner) return 'border-[2px] border-[#d4af37]';
             if (props.isSelected) return 'border-[1px] border-[#8c6239]';
-            // Slight inset shadow for paper feel
             return 'border-[0.5px] border-[#a8a499]/50 shadow-[inset_0_0_10px_rgba(0,0,0,0.05)]';
         },
         getShadowClass: (props) => {

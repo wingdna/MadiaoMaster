@@ -47,6 +47,7 @@ export interface ISkin {
         tableTextureSize?: string;      // background-size property
         tableBorderClass: string;       // Class for the 3D sides (thickness)
         tableReflectivity?: boolean;    // Enables mirror/patina layer
+        EnvironmentalShadows?: React.FC; // Optional dynamic shadows layer
     };
 
     // 2. Card Visuals
